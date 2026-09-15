@@ -75,4 +75,4 @@ class SecondUnitPoseFollowGuide:
 
 
 NODE_CLASS_MAPPINGS = {"SecondUnitPoseFollowGuide": SecondUnitPoseFollowGuide}
-NODE_DISPLAY_NAME_MAPPINGS = {"SecondUnitPoseFollowGuide": "Second Unit — Prepare Following Pose"}
+NODE_DISPLAY_NAME_MAPPINGS = {"SecondUnitPoseFollowGuide": "Second Unit - Prepare Following Pose"}
