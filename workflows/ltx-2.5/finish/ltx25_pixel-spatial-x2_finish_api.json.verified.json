@@ -1,0 +1,12 @@
+{
+  "local": true,
+  "production_ready": false,
+  "family": "LTX25",
+  "mode": "V2V",
+  "lane": "Distilled",
+  "quarantine_reason": "Genuine LTX2.5 generative photographic finish awaits current visual A/B approval; schema and contract tests are not visual approval.",
+  "graph_sha256": "90a7c4482f032bfff430d56e3d1b3e17b47acab36656f4089fb78ad5237cf586",
+  "validation_status": "schema-only",
+  "release_eligible": false,
+  "experimental": true
+}

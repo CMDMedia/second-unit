@@ -7,3 +7,6 @@ second-unit-home.json
 workflows/loaded/
 *.key
 .env
+
+# Local tested workflows may reference private media.
+workflows/local-ready/

@@ -4,7 +4,7 @@
 
 **By CMD Media Group.** Load a compatible ComfyUI workflow from DaVinci Resolve Studio, generate footage, and bring the result into your edit.
 
-This preview does not include generation presets. Bundled workflows are being corrected and tested for a later release. Custom workflows remain the user's responsibility; passing the import check does not certify visual quality.
+Second Unit supports environment stills and camera moves from reference images. The current installed workflow catalog contains **Juggernaut XL v9 Environment Still** and **LTX 2.5 Environment Animate — Prompt Camera**. See [workflows](workflows/README.md) for availability and requirements. Custom workflow imports are labeled separately from reviewed presets. An additional **H3 Pose Follow preview** supplies a single source-pose-to-video graph at native1536?864, without post-upscaling; its full render and visual validation are pending.
 
 ## Install on Windows
 
@@ -28,9 +28,9 @@ Open **Workspace → Workflow Integrations → Second Unit**. Restart Resolve af
 4. The panel checks registered nodes, required inputs, and model availability. A passing import is selected and labeled **custom**.
 5. Type your prompt in **SHOT**, choose a short duration, supply any required source/reference media, and generate.
 
-This preview recognizes compatible MiniMax H3, LTX 2.3/2.5, WAN 2.2, and SAM 3.1 workflow families. It is not a universal runner for arbitrary graphs. Video workflows need supported input/output nodes and delivery formats; the panel may adapt frame counts, prompts, and output settings. Begin with a short test.
+This preview recognizes compatible MiniMax H3, LTX 2.3/2.5, WAN 2.2, SAM 3.1, and Juggernaut XL v9 environment-still workflow families. It is not a universal runner for arbitrary graphs. Video workflows need supported input/output nodes and delivery formats; the panel may adapt frame counts, prompts, and output settings. Begin with a short test.
 
-Prompt expansion is unavailable in this preview; use manual prompts. Optional features that require bundled finish or helper workflows are unavailable unless you supply compatible files. Models, footage, and generation workflows are not distributed with this package.
+Select a Juggernaut, H3 or LTX 2.5 workflow, dictate or type into SHOT, and click PROMPT EXPANDER. Expansion follows the selected model: Juggernaut environment still prose, H3 reference sections, or LTX environment video prose. Juggernaut and LTX keep your original scene and camera request. Review the result before generating; REVERT restores your original text. Configure a supported prompt-expansion backend to use an LLM; a labeled local template is available if it cannot respond. Optional features that require bundled finish or helper workflows are unavailable unless you supply compatible files. Model weights and footage are not distributed with this package.
 
 ## Before going live
 

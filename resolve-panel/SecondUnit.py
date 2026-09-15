@@ -455,12 +455,14 @@ WATCHER_MAX_SECONDS = max(
 )
 RUN_ESTIMATE_S = _env_float("SECOND_UNIT_RUN_ESTIMATE", 180)
 
-MODES = ("T2V", "I2V", "FLF2V", "V2V", "ENVSWAP", "SWAP", "ANGLE", "SEGMENT")
+MODES = ("T2V", "I2V", "FLF2V", "V2V", "ENVSWAP", "SWAP", "ANGLE", "SEGMENT", "STORYBOARD", "STILLS")
 LANES = ("Distilled", "Quality")
-FAMILIES = ("LTX25", "LTX23", "MINIMAXH3", "WAN22", "SAM31")
+FAMILIES = ("LTX25", "LTX23", "MINIMAXH3", "WAN22", "SAM31", "JUGGERNAUTQWEN", "JUGGERNAUT")
 H3_ENVSWAP_MASTER_NAME = "h3_environment-swap_lock_master_world-relocation.json"
 
 DEFAULT_PRESETS = {
+    ("JUGGERNAUT", "STILLS", "Quality"): "SecondUnit-Juggernaut-Environment-Stills-API.json",
+    ("JUGGERNAUTQWEN", "STORYBOARD", "Quality"): "SecondUnit-Environment-Storyboard-Quality-API.json",
     ("MINIMAXH3", "ENVSWAP", "Distilled"): "h3_environment-swap_depthlock_fast_world-relocation.json",
     ("MINIMAXH3", "ENVSWAP", "Quality"): "h3_environment-swap_depthlock_quality_world-relocation.json",
     ("MINIMAXH3", "V2V", "Distilled"): "h3_v2v_draft_turbo4step_reference-video-with-sound.json",
@@ -493,7 +495,7 @@ LEGACY_NAME_MAP_FOR_SELFTEST = {
     "sam31_segment_roto-matte.json": "SECONDUNIT - SAM 3.1 - Segment Roto Matte.json",
     "wan22_i2v_quality_5b.json": "SECONDUNIT - WAN 2.2 - Animate Still 5B Quality.json",
 }
-RESOLUTIONS = ("720P", "1080P")
+RESOLUTIONS = ("720P", "1080P", "4K")
 
 
 MODE_LABELS = (
@@ -505,6 +507,8 @@ MODE_LABELS = (
     ("SWAP", "Replace the performer"),
     ("ANGLE", "Second angle"),
     ("SEGMENT", "Cut a matte"),
+    ("STORYBOARD", "Environment storyboard"),
+    ("STILLS", "Environment still"),
 )
 LANE_LABELS = (("Distilled", "Fast"), ("Quality", "Best quality"))
 FAMILY_LABELS = (
@@ -513,22 +517,28 @@ FAMILY_LABELS = (
     ("MINIMAXH3", "MiniMax H3"),
     ("WAN22", "WAN 2.2"),
     ("SAM31", "SAM 3.1"),
+    ("JUGGERNAUTQWEN", "Juggernaut + Qwen"),
+    ("JUGGERNAUT", "Juggernaut XL v9"),
 )
-RESOLUTION_LABELS = (("720P", "720p · faster"), ("1080P", "1080p · final"))
-OUTPUT_SIZES = {"720P": (1280, 720), "1080P": (1920, 1080)}
+RESOLUTION_LABELS = (("720P", "720p export"), ("1080P", "1080p export"), ("4K", "4K export (LTX only)"))
+OUTPUT_SIZES = {"720P": (1280, 720), "1080P": (1920, 1080), "4K": (3840, 2160)}
 
 DETAIL_UPSCALE_RELATIVE = _cfg(
     "detail_graph", "SECOND_UNIT_DETAIL_GRAPH",
     os.path.join("ltx-2.5", "finish", "ltx25_pixel-spatial-x2_finish_api.json")).replace("/", os.sep)
 DETAIL_UPSCALE_PROMPT = (
-    "The identical video creatively upscaled with crisp photoreal fine detail. Preserve the "
-    "exact subject identity, action, timing, camera, composition, lighting, color, and audio. "
-    "Add only stable high-frequency texture and physically plausible detail."
+    "A continuous photographic rendering of the supplied source video. Retain the same "
+    "subjects, identity, facial and body proportions, pose, wardrobe, actions and timing. "
+    "Keep the source camera, framing, perspective, geometry, lighting direction, exposure "
+    "and colors. Refine only existing visible photographic materials and natural texture, "
+    "without inventing pores, objects or unseen facial features. Preserve back-facing views "
+    "and the source motion. No beauty smoothing, plastic skin, exaggerated texture, crunchy "
+    "sharpening, relighting, camera changes or new cuts."
 )
-DETAIL_UPSCALE_NEGATIVE = (
-    "identity drift, changed action, changed camera, changed composition, morphing, warping, "
-    "melting, double edges, temporal flicker, crawling texture, text, logo, watermark, blur"
-)
+# Distilled CFG1 does not use negative conditioning; retain the tested empty negative.
+DETAIL_UPSCALE_NEGATIVE = ""
+DETAIL_UPSCALE_SIGMAS = "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+DETAIL_UPSCALE_LORA = "ltx-2.5-22b-ic-lora-pixel-spatial-upscaler-x2-1.0.safetensors"
 LTX_WORLD_REQUIRED_NEGATIVE = (
     "reference sheet, contact sheet, image grid, collage, split screen, tiled panels, "
     "multiple views, white catalog background, isolated clothing display, visible control "
@@ -651,6 +661,50 @@ def is_ltx_pixel_detail_graph(graph):
         if "pixel-spatial-upscaler" in name:
             return True
     return False
+
+
+def apply_detail_realism_settings(graph):
+    """Shared generative finish contract, independent of the upstream family."""
+    if not is_ltx_pixel_detail_graph(graph):
+        raise SecondUnitError("LTX detail requires the pixel-spatial x2 IC-LoRA graph.")
+    adapters = [n for n in graph.values() if "pixel-spatial-upscaler" in str((n.get("inputs") or {}).get("lora_name", ""))]
+    if len(adapters) != 1 or os.path.basename(adapters[0]["inputs"]["lora_name"].replace("\\", "/")) != DETAIL_UPSCALE_LORA:
+        raise SecondUnitError("LTX detail requires the genuine LTX 2.5 pixel-spatial x2 adapter; older adapters are incompatible.")
+    adapters[0]["inputs"]["strength_model"] = 1.0
+    for node in graph.values():
+        inputs = node.get("inputs") or {}
+        kind = node.get("class_type")
+        if kind == "LTXAddVideoICLoRAGuide": inputs["strength"] = 1.0
+        elif kind == "CFGGuider": inputs["cfg"] = 1.0
+        elif kind == "ManualSigmas": inputs["sigmas"] = DETAIL_UPSCALE_SIGMAS
+    positive, negative = find_prompt_targets(graph)
+    graph[positive[0]]["inputs"][positive[1]] = DETAIL_UPSCALE_PROMPT
+    if negative: graph[negative[0]]["inputs"][negative[1]] = DETAIL_UPSCALE_NEGATIVE
+
+
+def configure_detail_padding(graph, frames):
+    """Pad only the last source image to8n+1; trim decoded output tooriginal count."""
+    roles = {(n.get("_meta") or {}).get("second_unit_role"): str(i)
+             for i,n in graph.items() if (n.get("_meta") or {}).get("second_unit_role")}
+    needed = ("detail_source", "detail_tail", "detail_repeat", "detail_batch", "detail_guide", "detail_trim")
+    if not all(role in roles for role in needed):
+        raise SecondUnitError("LTX detail graph lacks exact source-frame padding/trim wiring.")
+    padded = 1 + int(math.ceil(max(0, frames - 1) / 8.0)) * 8
+    graph[roles["detail_source"]]["inputs"]["frame_load_cap"] = frames
+    graph[roles["detail_tail"]]["inputs"].update(batch_index=frames - 1, length=1)
+    graph[roles["detail_repeat"]]["inputs"]["amount"] = max(1, padded - frames)
+    source = [roles["detail_batch"], 0] if padded != frames else [roles["detail_source"], 0]
+    guide = graph[roles["detail_guide"]]["inputs"]
+    link = guide.get("image")
+    snap = graph.get(str(link[0]), {}) if is_link(link) else {}
+    if (snap.get("_meta") or {}).get("title") == "SECOND UNIT LTX GUIDE 32-GRID SNAP":
+        snap["inputs"]["image"] = source
+    else:
+        guide["image"] = source
+    for node in graph.values():
+        if node.get("class_type") == "LTXVEmptyLatentAudio": node["inputs"]["frames_number"] = padded
+    graph[roles["detail_trim"]]["inputs"].update(batch_index=0, length=frames)
+    return padded
 
 
 def estimate_detail_upscale_seconds(frames, resolution="1080P", graph=None):
@@ -1140,6 +1194,10 @@ def classify_graph_content(graph):
 
 def classify_graph_name(name, graph=None):
     tokens = set(name_tokens(name))
+    if "stills" in tokens and "environment" in tokens:
+        return "STILLS", "Quality"
+    if "storyboard" in tokens and "environment" in tokens:
+        return "STORYBOARD", "Quality"
 
     replace_words = ("swap", "replace", "replacement")
     mode = None
@@ -1178,6 +1236,10 @@ def infer_graph_family(path, graph=None):
     haystack = str(path or "").replace("\\", "/").lower()
     refs = " ".join(value.lower() for _nid, _cls, _key, value in graph_model_refs(graph or {}))
     text = haystack + " " + refs
+    if "juggernaut" in text and "qwen_image_edit_2511" in text:
+        return "JUGGERNAUTQWEN"
+    if "juggernaut" in text:
+        return "JUGGERNAUT"
     if "ltx-2.5" in text or "ltx25" in text or "ltxv-2b-2.5" in text:
         return "LTX25"
     if "ltx-2.3" in text or "ltx23" in text or "ltx-video-2b-v0.9" in text:
@@ -1233,6 +1295,7 @@ class GraphEntry(object):
         self.stamp = stamp or {}
         self.local = bool(self.stamp.get("local", False))
         self.production_ready = self.stamp.get("production_ready", True) is not False
+        self.user_requested_candidate = self.stamp.get("user_requested_candidate") is True
         self.quarantine_reason = str(self.stamp.get("quarantine_reason") or "")
         self.validation_status = str(self.stamp.get("validation_status") or "schema-only")
         self.release_eligible = self.stamp.get("release_eligible") is True
@@ -1295,6 +1358,18 @@ def _atomic_json(path, value):
                 os.unlink(temporary)
         except OSError:
             pass
+
+
+def migrate_delivery_state(state):
+    state = dict(state or {})
+    if state.get("delivery_defaults_version") != 1:
+        state["ltx_resolution"] = "1080P"
+        if state.get("family") in ("LTX25", "LTX23"):
+            state["resolution"] = "1080P"
+        state["delivery_defaults_version"] = 1
+    if state.get("ltx_resolution") not in RESOLUTIONS:
+        state["ltx_resolution"] = "1080P"
+    return state
 
 
 def panel_state_path():
@@ -1469,7 +1544,7 @@ def load_workflow_file(chosen, workflow_dir=None, comfy_url=None, python=None, r
         raise SecondUnitError("%s does not look like an API-format graph: every entry needs a "
                               "class_type." % base)
     if not infer_graph_family(base, graph):
-        raise SecondUnitError("This preview supports compatible H3, LTX, WAN 2.2 and SAM 3.1 workflows. The model family could not be identified.")
+        raise SecondUnitError("Supported families are H3, LTX, WAN 2.2, SAM 3.1 and Juggernaut + Qwen environment storyboards. The model family could not be identified.")
     dest_dir = os.path.join(workflow_dir, LOADED_WORKFLOWS_SUBDIR)
     if not os.path.isdir(dest_dir):
         os.makedirs(dest_dir)
@@ -1600,7 +1675,7 @@ def declares_mode(entry):
 def candidates_for(entries, mode, lane, allow_cloud, family=None, show_unproven=None):
     show = SHOW_UNPROVEN if show_unproven is None else bool(show_unproven)
     for_mode = [e for e in entries
-                if e.production_ready and e.mode == mode
+                if (e.production_ready or e.user_requested_candidate) and e.mode == mode
                 and not is_detail_upscale_entry(e)
                 and (not family or e.family == family)
                 and (show or getattr(e, "proven", False) or getattr(e, "user_workflow", False))]
@@ -1618,7 +1693,7 @@ def select_graph(entries, mode, lane, allow_cloud, chosen=None, family=None, sho
     matching = [e for e in entries if e.mode == mode
                 and not is_detail_upscale_entry(e)
                 and (not family or e.family == family)]
-    for_mode = [e for e in matching if e.production_ready]
+    for_mode = [e for e in matching if e.production_ready or e.user_requested_candidate]
     if not for_mode:
         quarantined = [e for e in matching if not e.production_ready]
         if quarantined:
@@ -1962,18 +2037,20 @@ def enforce_comfy_prores_hq(graph, fps, resolution="720P", output_size=None, vsr
                 },
             }
             images = [vsr_id, 0]
-        scale_id = _new_graph_node_id(graph)
-        graph[scale_id] = {
-            "class_type": "ImageScale",
-            "_meta": {"title": "SECOND UNIT %s DELIVERY SCALE" % delivery_label},
-            "inputs": {
-                "image": images,
-                "upscale_method": "lanczos",
-                "width": width,
-                "height": height,
-                "crop": "center",
-            },
-        }
+        upstream = graph.get(str(images[0])) or {}
+        if (upstream.get("class_type") == "ImageScale"
+                and (upstream.get("_meta") or {}).get("second_unit_role") == "delivery_scale"):
+            scale_id = str(images[0])
+            upstream["inputs"].update(width=width, height=height, upscale_method="lanczos", crop="center")
+        else:
+            scale_id = _new_graph_node_id(graph)
+            graph[scale_id] = {
+                "class_type": "ImageScale",
+                "_meta": {"title": "SECOND UNIT %s DELIVERY SCALE" % delivery_label,
+                          "second_unit_role": "delivery_scale"},
+                "inputs": {"image": images, "upscale_method": "lanczos", "width": width,
+                           "height": height, "crop": "center"},
+            }
         new_inputs = {
             "images": [scale_id, 0],
             "frame_rate": frame_rate,
@@ -1988,7 +2065,7 @@ def enforce_comfy_prores_hq(graph, fps, resolution="720P", output_size=None, vsr
             new_inputs["audio"] = audio
         graph[node_id] = {
             "class_type": "VHS_VideoCombine",
-            "_meta": {"title": "SECOND UNIT PRORES HQ · %s" % delivery_label},
+            "_meta": {"title": "SECOND UNIT PRORES HQ Â· %s" % delivery_label},
             "inputs": new_inputs,
         }
         changes.append((node_id, scale_id, width, height))
@@ -2465,6 +2542,66 @@ def h3_translator():
     return None
 
 
+def camera_reference_module():
+    import importlib.util
+    path = os.path.join(os.path.dirname(_self_path()), "camera_reference.py")
+    if not os.path.isfile(path):
+        path = os.path.join(os.path.dirname(os.path.abspath(WORKFLOW_DIR)), "resolve-panel", "camera_reference.py")
+    spec = importlib.util.spec_from_file_location("second_unit_camera_reference", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def rv_camera_snapshot(project, source_path="", request=""):
+    """Capture on the Resolve UI thread; only exact media paths establish provenance."""
+    camera = camera_reference_module()
+    timeline = _rv_call(project, "GetCurrentTimeline") if project else None
+    item = _rv_call(timeline, "GetCurrentVideoItem") if timeline else None
+    media = _rv_call(item, "GetMediaPoolItem") if item else None
+    current_path = rv_media_file_path(media) or ""
+    if timeline and not current_path:
+        found, found_media, _track = rv_clip_under_playhead(timeline, rv_timeline_fps(timeline, project))
+        if found is not None:
+            item, media = found, found_media
+            current_path = rv_media_file_path(media) or ""
+    selected = source_path or current_path
+    link, _reason = camera.linked_original(selected) if selected else (None, "no source")
+    wanted = {camera.path_key(selected)}
+    if link: wanted.add(camera.path_key(link["source"]))
+    wanted.discard("")
+    records = []
+    pool = _rv_call(project, "GetMediaPool") if project else None
+    root = _rv_call(pool, "GetRootFolder") if pool else None
+    pending, visited = ([root] if root else []), 0
+    while pending and visited < 2000:
+        folder = pending.pop()
+        for clip in (_rv_call(folder, "GetClipList") or []):
+            visited += 1
+            path = rv_media_file_path(clip) or ""
+            if camera.path_key(path) in wanted:
+                records.append({"path": path, "metadata": _rv_call(clip, "GetMetadata") or {}, "properties": _rv_call(clip, "GetClipProperty") or {}})
+        pending.extend(_rv_call(folder, "GetSubFolderList") or [])
+    optics, provenance = camera.choose_record(selected, records)
+    same_item = bool(selected and camera.path_key(selected) == camera.path_key(current_path))
+    selected_records = [r for r in records if camera.path_key(r["path"]) == camera.path_key(selected)]
+    props = (selected_records[0].get("properties") or {}) if selected_records else {}
+    if same_item and not props: props = _rv_call(media, "GetClipProperty") or {}
+    sizing = (_rv_call(item, "GetProperty") or {}) if same_item else {}
+    allowed = ("Pan", "Tilt", "ZoomX", "ZoomY", "RotationAngle", "CropLeft", "CropRight", "CropTop", "CropBottom", "CropSoftness", "FlipX", "FlipY", "Scaling")
+    snapshot = {"version": 1, "captured_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "source_path": selected, "source_key": camera.path_key(selected), "shot": request,
+                "optics": optics, "provenance": provenance,
+                "reference_geometry": {"resolution": props.get("Resolution"), "pixel_aspect": props.get("PAR") or props.get("Pixel Aspect Ratio"),
+                    "sizing": {k: v for k,v in sizing.items() if k in allowed and isinstance(v, (str,int,float,bool))},
+                    "timeline_width": _rv_call(timeline, "GetSetting", "timelineResolutionWidth") if timeline else None,
+                    "timeline_height": _rv_call(timeline, "GetSetting", "timelineResolutionHeight") if timeline else None,
+                    "scope": "available source sizing only; camera height, floor scale and pose unknown"},
+                "sensor_crop": "unknown", "camera_height": "unknown",
+                "reference_kind": "uncropped source media; identity cards excluded"}
+    return snapshot
+
+
 def h3_prompt_is_guide_shaped(text):
     return bool(re.search(r"^(detailed_description|integrated_multimodal_description):", text or "", re.M))
 
@@ -2481,7 +2618,10 @@ def h3_compose_opts(graph, request="", mode=None):
                                    for k, v in (node.get("inputs") or {}).items())
             break
     angle = h3_v3_kind(graph) == "angle" or mode == "ANGLE"
-    return {"continuous_take": True, "reframe": angle or (moving_camera and not has_source_video)}
+    requested_view = bool(re.search(r"\b(?:over.the.shoulder|OTS|follow(?:s|ing)?|tracking|hard cuts?|cut to|reverse angle)\b", request or "", re.I))
+    cuts = bool(re.search(r"\b(?:hard cuts?|cut to|cuts between|multiple shots)\b", request or "", re.I))
+    match_source_camera = bool(re.search(r"\b(?:match|keep|preserve) (?:the )?(?:original |source )camera (?:position|framing)\b", request or "", re.I))
+    return {"continuous_take": not cuts, "reframe": not match_source_camera or angle or moving_camera or requested_view}
 
 
 def h3_prompt_for_prepass(prompt_text, picture_count):
@@ -4383,6 +4523,70 @@ def inject_frame_sequence_loader(graph, mode, frames):
     return images_id, audio_id
 
 
+def is_pose_follow_graph(graph):
+    return any(isinstance(n, dict) and n.get("class_type") == "SecondUnitPoseFollowGuide" for n in (graph or {}).values())
+
+
+def stage_pose_follow_source(source, input_dir, seconds, in_seconds=None):
+    """Stage the selected moment at the recipe's native canvas and24fps."""
+    if not os.path.isfile(source):
+        raise SecondUnitError("Pose Follow requires a source video file.")
+    count = max(1, int(round(float(seconds) *24)))
+    name = "pose24a_" + proxy_input_name(source, seconds=seconds, dims=(1536,864), in_seconds=in_seconds)
+    target = os.path.join(input_dir, name)
+    if not os.path.isfile(target):
+        args = ["ffmpeg", "-y", "-v", "error"]
+        if in_seconds: args += ["-ss", str(float(in_seconds))]
+        args += ["-i", source, "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+                 "-map", "0:v:0", "-map", "1:a:0", "-vf",
+                 "fps=24,scale=1536:864:force_original_aspect_ratio=increase,crop=1536:864",
+                 "-frames:v", str(count), "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", "-c:a", "aac", "-t", str(count/24.0), target]
+        if _run_tool(args, timeout=600) is None:
+            raise SecondUnitError("Could not stage the24fps Pose Follow source; nothing was queued.")
+    actual = probe_frame_count(target)
+    if not actual or actual <1:
+        raise SecondUnitError("Pose Follow source has no readable frames.")
+    return name, int(actual)
+
+
+def patch_pose_follow_graph(graph, prompt, seconds, seed, source, environment, cards):
+    patched = copy.deepcopy(graph)
+    roles = {(n.get("_meta") or {}).get("second_unit_role"): (str(i), n) for i,n in patched.items()}
+    bindings = {"pose_source": source, "pose_environment": environment,
+                "pose_identity_front": cards[0], "pose_identity_threequarter": cards[1],
+                "pose_identity_profile": cards[2], "pose_identity_body": cards[3]}
+    for role,value in bindings.items():
+        if not value or role not in roles:
+            raise SecondUnitError("Pose Follow needs footage, an environment and all four identity/body cards: missing " + role)
+        _id,node=roles[role]
+        key = ("file" if node["class_type"] == "LoadVideo" else "video") if role == "pose_source" else "image"
+        node["inputs"][key] = value
+    h3=roles["pose_h3"][1]
+    if not str(prompt or "").strip():raise SecondUnitError("Describe the continuous follow shot before generating.")
+    h3["inputs"]["prompt"] = "camera motion\n" + compose_h3_prompt(prompt, patched)
+    fps=graph_fps(patched);frames=max(1,int(round(float(seconds)*fps)))
+    for node in patched.values():
+        inputs=node.get("inputs") or {}
+        if node.get("class_type")=="RandomNoise" and seed is not None:inputs["noise_seed"]=int(seed)
+    before=set(patched)
+    enforce_comfy_prores_hq(patched,fps,"720P",output_size=(1536,864),vsr=False)
+    # Native delivery: remove the helper's redundant same-size resize, preserving links.
+    for key in list(set(patched)-before):
+        node=patched[key]
+        if node.get("class_type")=="ImageScale":
+            old=[key,0];new=node["inputs"]["image"]
+            for item in patched.values():
+                for k,v in list((item.get("inputs") or {}).items()):
+                    if v==old:item["inputs"][k]=new
+            del patched[key]
+    enforce_lane_prefix(patched,"ENVSWAP")
+    return patched,{"fps":fps,"frames":frames,"generated_frames":snap_frames(frames,"MiniMaxH3ReferenceToVideo"),
+                    "seconds":float(seconds),"output_size":(1536,864),"final_output_size":(1536,864),
+                    "native_intermediate":True,"pose_follow":True,"source_targets":[(roles["pose_source"][0],"file" if roles["pose_source"][1]["class_type"]=="LoadVideo" else "video")],
+                    "frame_targets":[],"delivery_trim_targets":[],"prefix_changes":[],"prores_nodes":[],
+                    "resolution":"NATIVE","prefixes":[],"ingredient":None,"environment":None}
+
+
 def patch_graph(graph, mode, prompt, seconds, negative=None, seed=None, source_name=None,
                 source_name_last=None, identity_name=None, wardrobe_name=None,
                 prop1_name=None, prop2_name=None,
@@ -4402,8 +4606,13 @@ def patch_graph(graph, mode, prompt, seconds, negative=None, seed=None, source_n
             "Graph contains node(s) this panel refuses to run: %s. Re-verify it." % ", ".join(forbidden)
         )
 
+    if is_pose_follow_graph(graph):
+        return patch_pose_follow_graph(graph, prompt, seconds, seed, source_name, source_name_last,
+                                       [identity_name, wardrobe_name, prop1_name, prop2_name])
     patched = copy.deepcopy(graph)
     family = infer_graph_family("", patched)
+    if resolution == "4K" and family not in ("LTX25", "LTX23"):
+        raise SecondUnitError("4K export is available for LTX workflows only. Choose 720p or 1080p for this model.")
     h3_reference_targets = []
     world_reference_targets = []
     ltx_world = bool(
@@ -4489,7 +4698,8 @@ def patch_graph(graph, mode, prompt, seconds, negative=None, seed=None, source_n
             or (family == "MINIMAXH3" and mode == "V2V")
         )
     )
-    v2v_edit_changes = apply_v2v_edit_amount(patched, edit_amount) if mode == "V2V" else []
+    detail_graph = is_ltx_pixel_detail_graph(patched)
+    v2v_edit_changes = apply_v2v_edit_amount(patched, edit_amount) if mode == "V2V" and not detail_graph else []
     fps = graph_fps(patched)
     derived_frames = derive_frames(fps, seconds)
     if family == "MINIMAXH3":
@@ -4542,7 +4752,12 @@ def patch_graph(graph, mode, prompt, seconds, negative=None, seed=None, source_n
         if family == "MINIMAXH3":
 
             prompt_text = compose_h3_prompt(prompt_text, patched)
-        elif mode == "V2V":
+            if any("camera_motion_h3" in str((n.get("inputs") or {}).get("lora_name", "")).lower()
+                   and float((n.get("inputs") or {}).get("strength_model", 0)) != 0
+                   for n in patched.values() if isinstance(n, dict)):
+                if not prompt_text.lower().startswith("camera motion"):
+                    prompt_text = "camera motion, " + prompt_text
+        elif mode == "V2V" and not detail_graph:
             prompt_text = compose_v2v_prompt(
                 prompt_text, family, retention=v2v_retention,
                 ingredient_role=ingredient_role, edit_amount=edit_amount,
@@ -4659,6 +4874,9 @@ def patch_graph(graph, mode, prompt, seconds, negative=None, seed=None, source_n
                 source_targets.append((nid, key))
             elif source_name_last and not ingredient_info and aux_images:
                 source_targets.append(aux_images[0])
+
+    if detail_graph:
+        apply_detail_realism_settings(patched)
 
     first_frame_guide = None
     if first_frame_name and first_frame_arm == "latent" and family == "MINIMAXH3":
@@ -4783,6 +5001,8 @@ def force_graph_timing(graph, fps, frames):
         raise SecondUnitError("Detail upscaler exposes no frame-count input to lock to the source.")
     if not fps_changes:
         raise SecondUnitError("Detail upscaler exposes no fps input to lock to the source.")
+    if is_ltx_pixel_detail_graph(graph):
+        configure_detail_padding(graph, frames)
     return {"frames": frame_changes, "fps": fps_changes}
 
 
@@ -4810,7 +5030,8 @@ def detail_upscale_entry(workflow_dir=WORKFLOW_DIR):
         raise SecondUnitError("LTX detail graph is unreadable: %s" % exc)
     if not is_api_format(graph):
         raise SecondUnitError("LTX detail graph is not API format.")
-    return GraphEntry(path, "V2V", "Distilled", stamp, infer_graph_family(path, graph) or "LTX23")
+    apply_detail_realism_settings(graph)
+    return GraphEntry(path, "V2V", "Distilled", stamp, "LTX25")
 
 
 def is_detail_upscale_entry(entry):
@@ -6929,7 +7150,7 @@ class _DetailPassRelay(object):
             return
         if kind == "status":
             text = message.get("text") or ""
-            message["text"] = "LTX detail pass · " + text
+            message["text"] = "LTX detail pass Â· " + text
             if self.parent_world_watcher_seconds:
                 message["detail"] = "%s - parent World watcher %s total" % (
                     message.get("detail") or "final detail stage",
@@ -6957,7 +7178,7 @@ class _AnchorPassRelay(object):
             self.error = message.get("text") or "First-frame anchor pre-pass failed."
             return
         if kind == "status":
-            message["text"] = "First-frame anchor pre-pass · " + (message.get("text") or "")
+            message["text"] = "First-frame anchor pre-pass Â· " + (message.get("text") or "")
             progress = message.get("progress")
             if isinstance(progress, (int, float)):
                 message["progress"] = 2 + int(8.0 * max(0.0, min(100.0, progress)) / 100.0)
@@ -6997,6 +7218,50 @@ class _WorldWindowRelay(object):
                 message["detail"] += " - parent World watcher %s total" % watcher_duration(
                     self.parent_watcher_seconds)
         self.outbox.put(message)
+
+
+def prepare_environment_still(graph, prompt, seed):
+    patched = copy.deepcopy(graph)
+    def one(role, kind):
+        found = [n for n in patched.values() if (n.get("_meta") or {}).get("second_unit_role") == role and n.get("class_type") == kind]
+        if len(found) != 1:
+            raise SecondUnitError("Environment still needs exactly one " + role)
+        return found[0]["inputs"]
+    positive = one("environment_prompt", "CLIPTextEncode")
+    sampler = one("environment_sampler", "KSampler")
+    output = one("environment_output", "SaveImage")
+    if str(prompt or "").strip():
+        positive["text"] = str(prompt).strip()
+    if seed is not None:
+        sampler["seed"] = int(seed)
+    output["filename_prefix"] = "SecondUnit/Environments/%s-%s/Environment-Master" % (time.strftime("%Y%m%d-%H%M%S"), uuid.uuid4().hex[:6])
+    return patched
+
+
+def prepare_environment_storyboard(graph, prompt, seed, folder=None):
+    patched = copy.deepcopy(graph)
+    roles = {}
+    for node in patched.values():
+        role = (node.get("_meta") or {}).get("second_unit_role")
+        if role:
+            roles.setdefault(role, []).append(node)
+    for role, kind in (("environment_prompt", "CLIPTextEncode"),
+                       ("environment_seed", "PrimitiveInt"),
+                       ("environment_folder", "PrimitiveString")):
+        if len(roles.get(role, [])) != 1 or roles[role][0]["class_type"] != kind:
+            raise SecondUnitError("Environment storyboard is missing its %s control." % role)
+    if len(roles.get("reference_output", [])) != 4 or len(roles.get("storyboard_output", [])) != 1:
+        raise SecondUnitError("Environment storyboard must save four individual references and one sheet.")
+    if str(prompt or "").strip():
+        roles["environment_prompt"][0]["inputs"]["text"] = str(prompt).strip()
+    roles["environment_seed"][0]["inputs"]["value"] = int(seed)
+    folder = folder or ("SecondUnit/Environments/%s-%s" %
+                        (time.strftime("%Y%m%d-%H%M%S"), uuid.uuid4().hex[:6]))
+    parts = str(folder).replace("\\", "/").split("/")
+    if any(part in ("", ".", "..") or ":" in part for part in parts):
+        raise SecondUnitError("Use a relative environment folder inside ComfyUI output.")
+    roles["environment_folder"][0]["inputs"]["value"] = "/".join(parts)
+    return patched
 
 
 class GenerateJob(threading.Thread):
@@ -7063,7 +7328,7 @@ class GenerateJob(threading.Thread):
                            parent_world_watcher_seconds=None):
         source_paths = list(source_paths or [])
         if not source_paths:
-            raise SecondUnitError("H3 finished but supplied no video for the LTX detail pass.")
+            raise SecondUnitError("Generation supplied no video for the LTX detail pass.")
         source_path = source_paths[0]
         source_frames = probe_frame_count(source_path) or int(source_info.get("frames") or 0)
         source_fps = float(source_info.get("fps") or DEFAULT_FPS)
@@ -7336,7 +7601,91 @@ class GenerateJob(threading.Thread):
             fps=fps, warnings=warnings, render_seconds=rendered_seconds,
             estimated_seconds=parent_estimate_s)
 
+    def run_environment_still(self):
+        params = self.params
+        with open(params["entry"].path, "r", encoding="utf-8-sig") as handle:
+            graph = prepare_environment_still(json.load(handle), params.get("prompt"), params.get("seed"))
+        stats = self.client.ping()
+        output_dir = parse_dir_arg(stats, "--output-directory")
+        self.preflight(graph)
+        if self.stop_event.is_set():
+            raise SecondUnitError("Cancelled before submit. Nothing was queued.")
+        prompt_id = self.client.submit(graph, uuid.uuid4().hex)
+        started = time.monotonic()
+        while not self.stop_event.is_set():
+            if time.monotonic() - started > watcher_deadline_seconds(120):
+                raise SecondUnitError("Still watcher deadline reached; prompt may still be running: " + prompt_id)
+            try:
+                history = self.client.history(prompt_id)
+            except (ComfyUnreachable, ComfyTimeout):
+                history = None
+            if history:
+                failure = history_error(history)
+                if failure:
+                    raise SecondUnitError("Environment render failed: " + str(failure))
+                items = history_outputs(history)
+                if len(items) != 1 or not items[0]["filename"].lower().endswith(".png"):
+                    raise SecondUnitError("Expected one environment PNG.")
+                paths = resolve_output_paths(items, output_dir, self.client)
+                self.post("done", paths=paths, prompt_id=prompt_id, frames=1, fps=0,
+                          storyboard=True, environment_still=True, warnings=[],
+                          render_seconds=time.monotonic()-started)
+                return
+            self.post("status", state="RENDERING", prompt_id=prompt_id,
+                      elapsed=time.monotonic()-started, text="Generating environment still at 1216 x 832...")
+            self.stop_event.wait(POLL_INTERVAL)
+        raise SecondUnitError("Stopped watching; render may still be running: " + prompt_id)
+
+    def run_environment_storyboard(self):
+        params = self.params
+        with open(params["entry"].path, "r", encoding="utf-8-sig") as handle:
+            graph = prepare_environment_storyboard(
+                json.load(handle), params.get("prompt"), params["seed"],
+                params.get("environment_folder"))
+        stats = self.client.ping()
+        output_dir = parse_dir_arg(stats, "--output-directory")
+        self.preflight(graph)
+        if self.stop_event.is_set():
+            raise SecondUnitError("Cancelled before submit. Nothing was queued.")
+        prompt_id = self.client.submit(graph, uuid.uuid4().hex)
+        started = time.monotonic()
+        deadline = watcher_deadline_seconds(720)
+        self.post("status", state="RENDERING", prompt_id=prompt_id, progress=10,
+                  text="Generating environment references and the complete storyboard sheet...")
+        while not self.stop_event.is_set():
+            if time.monotonic() - started > deadline:
+                raise SecondUnitError("Environment storyboard watcher deadline reached; the prompt may still be running: %s" % prompt_id)
+            try:
+                history = self.client.history(prompt_id)
+            except (ComfyUnreachable, ComfyTimeout):
+                self.post("status", state="RENDERING", elapsed=time.monotonic()-started,
+                          text="Waiting for ComfyUI; the storyboard has not been resubmitted.")
+                self.stop_event.wait(POLL_INTERVAL)
+                continue
+            if history:
+                failure = history_error(history)
+                if failure:
+                    raise SecondUnitError("Render FAILED on %s - %s" % (self.client.base, failure))
+                self.post("status", state="FETCHING", progress=95, text="Fetching all four references and the sheet...")
+                items = history_outputs(history)
+                if len(items) != 5 or any(not item["filename"].lower().endswith(".png") for item in items):
+                    raise SecondUnitError("Expected four reference PNGs and one storyboard PNG; received %d files." % len(items))
+                paths = resolve_output_paths(items, output_dir, self.client)
+                self.post("done", paths=paths, prompt_id=prompt_id, frames=4, fps=0,
+                          storyboard=True, warnings=[], render_seconds=time.monotonic()-started)
+                return
+            self.post("status", state="RENDERING", elapsed=time.monotonic()-started,
+                      text="Generating environment references; outputs stay at 1216 x 832.")
+            self.stop_event.wait(POLL_INTERVAL)
+        raise SecondUnitError("Stopped watching prompt %s; it may still be running." % prompt_id)
+
     def _run(self):
+        if self.params.get("entry") and self.params["entry"].stamp.get("pipeline") == "h3_pose_follow":
+            self.params.update(detail_upscale=False, auto_cards=False, source_format="VIDEO")
+        if self.params.get("mode") == "STILLS":
+            return self.run_environment_still()
+        if self.params.get("mode") == "STORYBOARD":
+            return self.run_environment_storyboard()
         window_request = self.world_window_request()
         if window_request:
             self.run_world_generation_windows(window_request)
@@ -7459,7 +7808,11 @@ class GenerateJob(threading.Thread):
                 raise SecondUnitError(
                     "%s is a folder of frames. Set the source format to PNG sequence (V2V) to use it."
                     % params["source_path"])
-            if not source_frames:
+            if is_pose_follow_graph(graph):
+                source_name, pose_count = stage_pose_follow_source(
+                    params["source_path"], input_dir, params["seconds"], params.get("source_in_seconds"))
+                params["seconds"] = pose_count /24.0
+            elif not source_frames:
                 source_name = stage_source_file(
                     params["source_path"], input_dir,
                     seconds=params.get("seconds"), dims=dims,
@@ -7567,7 +7920,7 @@ class GenerateJob(threading.Thread):
             finish_source_size=params.get("_finish_source_size"),
             source_frames=source_frames,
         )
-        if params.get("exact_frames") or params.get("exact_fps"):
+        if (params.get("exact_frames") or params.get("exact_fps")) and not is_pose_follow_graph(patched):
             exact_frames = params.get("exact_frames") or info["frames"]
             exact_fps = params.get("exact_fps") or info["fps"]
             info["forced_timing"] = force_graph_timing(patched, exact_fps, exact_frames)
@@ -7603,6 +7956,8 @@ class GenerateJob(threading.Thread):
             delivery_text = (
                 "H3 %dx%d native World window intermediate; one 1080p LTX final follows"
                 % (intermediate_size[0], intermediate_size[1]))
+        elif is_pose_follow_graph(patched):
+            delivery_text = "Native1536x864 ProRes HQ; no LTX or RTX upscale"
         else:
             delivery_text = "%s ProRes HQ" % dict(RESOLUTION_LABELS)[params["resolution"]]
         self.post(
@@ -9343,7 +9698,7 @@ class SecondUnitPanel(object):
         if elapsed is not None:
             timing = mmss(elapsed)
             if eta is not None:
-                timing += " · ETA " + mmss(eta)
+                timing += " Â· ETA " + mmss(eta)
             self.set_attr("jobtime", "Text", timing)
         if text is not None:
             self.status(text, progress, severity)
@@ -9489,15 +9844,16 @@ class SecondUnitPanel(object):
             row("MODEL", [
                 ui.ComboBox({"ID": "family", "Weight": 1, "Font": face, "StyleSheet": ST_COMBO}),
             ]),
-            row("OUTPUT", [
+            row("EXPORT", [
                 ui.ComboBox({"ID": "resolution", "Weight": 1, "Font": face,
                              "StyleSheet": ST_COMBO}),
-                ui.Label({"Text": "PRORES HQ · MOV", "Weight": 0,
+                ui.Label({"Text": "PRORES HQ Â· MOV", "Weight": 0,
                           "Font": eyebrow_font, "StyleSheet": ST_META}),
             ]),
             row("DETAIL", [
                 ui.CheckBox({"ID": "detail_upscale",
-                             "Text": "LTX 2.5 detail pass (pixel-spatial x2)",
+                             "Text": "LTX 2.5 photographic detail (optional x2)",
+                             "ToolTip": "Generative refinement can alter faces or fine detail. Preserves selected export size; adds processing time.",
                              "Checked": False, "Weight": 1, "Font": face_small,
                              "StyleSheet": ST_CHECK}),
             ]),
@@ -9531,12 +9887,13 @@ class SecondUnitPanel(object):
                 }),
             ]),
             row("EXPAND", [
-                ui.Button({"ID": "expand_prompt", "Text": "EXPAND (UNAVAILABLE)", "Enabled": False, "Weight": 0, "Font": eyebrow_font,
+                ui.Button({"ID": "expand_prompt", "Text": "PROMPT EXPANDER", "Enabled": False, "Weight": 0, "Font": eyebrow_font,
                            "MinimumSize": [150, 28], "StyleSheet": ST_BTN_GHOST}),
                 ui.Button({"ID": "revert_prompt", "Text": "REVERT", "Weight": 0, "Font": eyebrow_font, "MinimumSize": [80, 28], "StyleSheet": ST_BTN_GHOST}),
                 ui.Label({"ID": "expander_status", "Weight": 1, "Font": face_small, "StyleSheet": ST_META,
-                          "Text": "rewrites SHOT into MiniMax's official prompt language for the selected preset"}),
+                          "Text": "expands SHOT for the selected model while preserving your scene and camera request"}),
             ]),
+            ui.Label({"ID": "camera_status", "Text": "Camera metadata captured before expansion or generation", "WordWrap": True, "Font": face_small}),
             row("AVOID", [
                 ui.LineEdit({"ID": "negative", "Text": "", "Weight": 1, "Font": face_small,
                              "StyleSheet": ST_INPUT,
@@ -9780,7 +10137,7 @@ class SecondUnitPanel(object):
         eta = self._op_status.get("eta")
         if eta is not None:
             eta = max(0, eta - since)
-        self.set_attr("jobtime", "Text", mmss(elapsed) + ("" if eta is None else " · ETA " + mmss(eta)))
+        self.set_attr("jobtime", "Text", mmss(elapsed) + ("" if eta is None else " Â· ETA " + mmss(eta)))
 
     def note_dead_timer(self):
         if getattr(self, "_own_loop_active", False): return
@@ -9931,13 +10288,16 @@ class SecondUnitPanel(object):
                                 self.current_preset(), self.current_family(), show_unproven=self.show_unproven())
         state = {"family": self.current_family(), "mode": self.current_mode(), "lane": self.current_lane(),
                  "preset": entry.name if entry else "", "resolution": self.current_resolution(),
-                 "detail_upscale": bool(self.get_checked("detail_upscale"))}
+                 "detail_upscale": bool(self.get_checked("detail_upscale")),
+                 "ltx_resolution": getattr(self, "_ltx_resolution", "1080P"), "delivery_defaults_version": 1}
         if state != getattr(self, "_state_last", None):
             self._state_last = dict(state)
             write_panel_state(state)
 
     def restore_panel_state(self):
-        state = read_panel_state()
+        state = migrate_delivery_state(read_panel_state())
+        self._ltx_resolution = state["ltx_resolution"]
+        self._delivery_family = state.get("family")
         try:
             for widget_id, pairs, key in (("family", FAMILY_LABELS, "family"), ("mode", MODE_LABELS, "mode"),
                                           ("lane", LANE_LABELS, "lane"), ("resolution", RESOLUTION_LABELS, "resolution")):
@@ -9956,6 +10316,7 @@ class SecondUnitPanel(object):
             self._state_ready = True
 
     def vsr_note(self, entry):
+        if entry and entry.stamp.get("pipeline") == "h3_pose_follow": return None
         if not entry or entry.family != "MINIMAXH3" or self.current_resolution() != "1080P" or self.get_checked("detail_upscale"):
             return None
         client = getattr(self, "client", None)
@@ -9972,6 +10333,9 @@ class SecondUnitPanel(object):
                 "have that node. Tick DETAIL (LTX 2.5 x2) for a real 1080P, or choose 720P." % comfy_short_target(COMFY_URL))
 
     def on_mode_changed(self, event=None):
+        if self.current_mode() in ("STORYBOARD", "STILLS"):
+            self.set_attr("family", "CurrentIndex", [key for key, _ in FAMILY_LABELS].index("JUGGERNAUT" if self.current_mode() == "STILLS" else "JUGGERNAUTQWEN"))
+            self.set_attr("lane", "CurrentIndex", [key for key, _ in LANE_LABELS].index("Quality"))
         self.repopulate_presets()
         self.on_selection_changed(event)
 
@@ -10040,6 +10404,8 @@ class SecondUnitPanel(object):
 
 
     MODE_BLURB = {
+        "STILLS": "Generate one photoreal environment image at 1216 x 832.",
+        "STORYBOARD": "Create four environment references and one complete storyboard sheet.",
         "T2V": "Invent a shot from the description alone.",
         "I2V": "Animate a still into a moving shot.",
         "FLF2V": "Travel from an opening frame to a closing frame.",
@@ -10052,16 +10418,34 @@ class SecondUnitPanel(object):
 
     def refresh_selection(self):
         mode = self.current_mode()
+        family = self.current_family()
+        prior_family = getattr(self, "_delivery_family", None)
+        if family in ("LTX25", "LTX23"):
+            if prior_family not in ("LTX25", "LTX23"):
+                chosen = getattr(self, "_ltx_resolution", "1080P")
+                self.set_attr("resolution", "CurrentIndex", list(RESOLUTIONS).index(chosen))
+            self._ltx_resolution = self.current_resolution()
+        elif self.current_resolution() == "4K":
+            self.set_attr("resolution", "CurrentIndex", list(RESOLUTIONS).index("1080P"))
+        self._delivery_family = family
+        self.set_attr("prompt", "PlaceholderText",
+                      "Keep the camera still in this cave; water drips from the rock..."
+                      if family == "LTX25" else ("A wet limestone cave at blue hour, eye-level view, no people..."
+                      if family == "JUGGERNAUT" else "Describe the scene, action and camera movement..."))
+        for widget in ("seconds", "resolution", "negative"):
+            self.set_attr(widget, "Enabled", mode not in ("STORYBOARD", "STILLS"))
 
         entry, reason = select_graph(self.entries, mode, self.current_lane(),
                                      self.get_checked("allow_cloud"), self.current_preset(),
                                      self.current_family(), show_unproven=self.show_unproven())
 
 
+        self.set_attr("expand_prompt", "Enabled", bool(entry and entry.family in ("MINIMAXH3", "LTX25", "JUGGERNAUT")
+                      and not getattr(self, "expander_inflight", False)))
         blurb = self.MODE_BLURB.get(mode, "")
         if entry:
             self.set_attr("graph", "Text",
-                          u"%s   ·   %s   ·   %s" %
+                          u"%s   Â·   %s   Â·   %s" %
                           (dict(FAMILY_LABELS).get(entry.family, entry.family or "Model"),
                            blurb, entry.name.replace("_api.json", "")))
         else:
@@ -10080,6 +10464,8 @@ class SecondUnitPanel(object):
                 graph = None
 
 
+        pose_follow = bool(graph and is_pose_follow_graph(graph))
+        self.set_attr("resolution", "Enabled", not pose_follow)
         roles = keyframe_targets(graph) if graph else {}
         self.set_attr("negativerow", "Hidden", bool(graph) and not graph_accepts_negative(graph))
         needs_two = bool(roles.get("first_frame") and roles.get("last_frame"))
@@ -10106,8 +10492,8 @@ class SecondUnitPanel(object):
         )
         self.set_attr("source3row", "Hidden", not (h3_environment or ltx_world or h3_v3))
         self.set_attr("source4row", "Hidden", not (h3_environment or ltx_world or h3_v3))
-        self.set_attr("source5row", "Hidden", not (ltx_world or h3_v3))
-        self.set_attr("source6row", "Hidden", not (ltx_world or h3_v3))
+        self.set_attr("source5row", "Hidden", not (ltx_world or h3_v3 or pose_follow))
+        self.set_attr("source6row", "Hidden", not (ltx_world or h3_v3 or pose_follow))
         self.set_attr("v2vcontrols", "Hidden", mode != "V2V")
 
         self.set_attr("envcontrols", "Hidden", mode != "ENVSWAP" or h3_v3)
@@ -10115,6 +10501,9 @@ class SecondUnitPanel(object):
         self.set_attr("source3label", "Text", "CARD 1" if h3_v3 else "IDENTITY")
         self.set_attr("source5label", "Text", "CARD 2" if h3_v3 else "PROP 1")
         self.set_attr("source6label", "Text", "CARD 3" if h3_v3 else "PROP 2")
+        if pose_follow:
+            for widget,label in (("source3label","FRONT CARD"),("source4label","THREE-QUARTER"),("source5label","PROFILE CARD"),("source6label","BODY CARD")):
+                self.set_attr(widget,"Text",label)
         if h3_v3:
             self.set_attr("source3", "PlaceholderText",
                           "identity card 1: the replacement's face, close, straight to lens" if mode == "SWAP"
@@ -10128,7 +10517,8 @@ class SecondUnitPanel(object):
         )
         self.set_attr("relightrow", "Hidden", not legacy_ltx_world)
         self.set_attr("environment_relight", "Enabled", legacy_ltx_world)
-        can_chain_detail = mode != "SEGMENT" and not is_detail_upscale_entry(entry)
+        can_chain_detail = mode not in ("SEGMENT", "STORYBOARD", "STILLS") and not is_detail_upscale_entry(entry) and not pose_follow
+        if pose_follow: self.set_attr("detail_upscale", "Checked", False)
         self.set_attr("detail_upscale", "Enabled", can_chain_detail)
         self.set_attr("sourcelabel", "Text",
                       "Opening frame" if mode in IMAGE_SOURCE_MODES else "Footage")
@@ -10138,6 +10528,9 @@ class SecondUnitPanel(object):
                           "World (optional)" if mode == "ANGLE" else (
                           "Ingredient" if (mode == "V2V" or ltx_ingredient) else (
                               "Reference" if mode == "SWAP" else "")))))
+        if entry and entry.family == "MINIMAXH3" and mode == "I2V" and needs_two:
+            self.set_attr("sourcelabel", "Text", "Identity reference")
+            self.set_attr("source2label", "Text", "Scene / composite")
         self.set_attr("source2", "PlaceholderText",
                       "still of the new environment"
                       if environment_reference else (
@@ -10159,10 +10552,10 @@ class SecondUnitPanel(object):
             guidance = duration_guidance(entry.family if entry else self.current_family(), seconds)
             if snapped != frames:
 
-                self.set_attr("frames", "Text", u"%d frames · %.4g fps · %s · from %d"
+                self.set_attr("frames", "Text", u"%d frames Â· %.4g fps Â· %s Â· from %d"
                               % (snapped, fps, resolution, frames))
             else:
-                self.set_attr("frames", "Text", u"%d frames · %.4g fps · %s"
+                self.set_attr("frames", "Text", u"%d frames Â· %.4g fps Â· %s"
                               % (frames, fps, resolution))
             if guidance:
                 self.set_attr("frames", "Text", self.get_text("frames") + " | " + guidance)
@@ -10186,9 +10579,17 @@ class SecondUnitPanel(object):
                     + " | H3 diffusion native %dx%d" % native_h3_size)
         except SecondUnitError as exc:
             self.set_attr("frames", "Text", str(exc))
+        if entry and entry.family in ("LTX25", "LTX23") and mode not in ("STILLS", "STORYBOARD"):
+            self.set_attr("frames", "Text", self.get_text("frames") + " | 16:9 export resize / center crop; generation canvas unchanged")
+        if pose_follow:
+            self.set_attr("frames", "Text", "PREVIEW | Native 1536 x 864 | source pose to 2D follow to H3 | no LTX / RTX upscale")
+        if mode == "STILLS":
+            self.set_attr("frames", "Text", "Environment PNG at 1216 x 832")
+        if mode == "STORYBOARD":
+            self.set_attr("frames", "Text", "4 references at 1216 x 832 + 2432 x 1664 storyboard")
         if getattr(self, "build_stale", False):
             self.set_attr("graph", "Text", BUILD_STALE_TEXT)
-        if self.get_checked("detail_upscale"):
+        if self.get_checked("detail_upscale") and mode not in ("STORYBOARD", "STILLS"):
             try:
                 detail_upscale_entry()
                 self._detail_note = None
@@ -10510,6 +10911,7 @@ class SecondUnitPanel(object):
                                   % self.pending_sequence["name"])
         project = rv_current_project(self.resolve, self.injected_project)
         info = rv_timeline_source(project, allow_virtual=True)
+        info["camera_reference"] = rv_camera_snapshot(project, info.get("path") or "", self.get_text("prompt") or "")
         timeline = _rv_call(project, "GetCurrentTimeline")
         width, height = rv_sequence_dimensions(timeline)
         if info.get("start") is None or info.get("end") is None:
@@ -10765,6 +11167,7 @@ class SecondUnitPanel(object):
         first, last = png_dimensions(frames[0]), png_dimensions(frames[-1])
         manifest = {
             "verified": True, "clip": info.get("name"), "source_path": info.get("path"),
+            "camera_reference": info.get("camera_reference"),
             "timeline": info.get("timeline"), "track": info.get("track"), "over": info.get("over"),
             "start": info.get("start"), "end": info.get("end"), "frames": len(frames),
             "fps": info.get("fps"), "width": (first or (0, 0))[0], "height": (first or (0, 0))[1],
@@ -10776,6 +11179,14 @@ class SecondUnitPanel(object):
         try:
             with open(sequence_manifest_path(pending["folder"]), "w", encoding="utf-8") as handle:
                 json.dump(manifest, handle, indent=2)
+            camera_snapshot = info.get("camera_reference") or {}
+            focal_source = ((camera_snapshot.get("provenance") or {}).get("fields") or {}).get("focal_length_mm") or {}
+            original = focal_source.get("source") or info.get("path")
+            if original:
+                with open(os.path.join(pending["folder"], "second-unit-source.json"), "w", encoding="utf-8") as handle:
+                    json.dump({"target": os.path.abspath(pending["folder"]), "source": original,
+                               "start_frame": info.get("start"), "end_frame_exclusive": info.get("end"),
+                               "camera_reference": camera_snapshot, "basis": "Resolve source capture; optics only"}, handle, indent=2)
         except OSError as exc:
             log("sequence: manifest not written: %s" % exc)
         pending["verified"] = True
@@ -10885,14 +11296,100 @@ class SecondUnitPanel(object):
         else:
             self.status("Nothing running.")
 
+    def camera_source_key(self):
+        camera = camera_reference_module()
+        source = (self.get_text("source") or "").strip()
+        if not source:
+            project = rv_current_project(self.resolve, self.injected_project)
+            timeline = _rv_call(project, "GetCurrentTimeline") if project else None
+            item = _rv_call(timeline, "GetCurrentVideoItem") if timeline else None
+            source = rv_media_file_path(_rv_call(item, "GetMediaPoolItem")) if item else ""
+            if timeline and not source:
+                _item, media, _track = rv_clip_under_playhead(timeline, rv_timeline_fps(timeline, project))
+                source = rv_media_file_path(media) if media else ""
+        return camera.path_key(source)
+
+    def capture_camera_reference(self, request):
+        source = (self.get_text("source") or "").strip()
+        project = rv_current_project(self.resolve, self.injected_project)
+        snapshot = rv_camera_snapshot(project, source, request)
+        camera = camera_reference_module()
+        context = camera.prompt_context(snapshot, request)
+        folder = os.path.join(LAB_CACHE, "camera-references")
+        os.makedirs(folder, exist_ok=True)
+        receipt = os.path.join(folder, "camera-%s.json" % uuid.uuid4().hex)
+        with open(receipt, "w", encoding="utf-8") as handle:
+            json.dump(snapshot, handle, indent=2)
+        self.camera_snapshot = snapshot
+        focal = snapshot["optics"].get("focal_length_mm")
+        label = ("Recorded lens %g mm (clip metadata)" % focal if focal else "Camera metadata %s" % snapshot["provenance"]["status"])
+        if camera.LENS_OVERRIDE.search(request or ""): label += " | SHOT lens override retained"
+        self.set_attr("camera_status", "Text", label)
+        return snapshot, context, receipt
+
     def on_expand_prompt(self, _event):
-        self.status("Prompt expansion is unavailable in this preview. Type your prompt in SHOT, then generate.")
+        if getattr(self, "expander_inflight", False):
+            return
+        entry, reason = select_graph(self.entries, self.current_mode(), self.current_lane(),
+            self.get_checked("allow_cloud"), self.current_preset(), self.current_family(),
+            show_unproven=self.show_unproven())
+        if not entry or entry.family not in ("MINIMAXH3", "LTX25", "JUGGERNAUT"):
+            self.status(reason or "Select a Juggernaut, MiniMax H3 or LTX 2.5 workflow to expand SHOT.")
+            return
+        raw_request = self.get_text("prompt") or ""
+        previous_context = getattr(self, "expander_camera_context", "")
+        request = raw_request.replace(previous_context, "").strip() if previous_context else raw_request
+        if not request.strip():
+            self.status("Describe your shot in SHOT before expanding it.")
+            return
+        try:
+            translator = h3_translator()
+            if translator is None:
+                raise SecondUnitError("The prompt translator is missing from this installation.")
+            cfg = h3_expander_config(translator)
+            with open(entry.path, "r", encoding="utf-8-sig") as handle:
+                graph = json.load(handle)
+        except Exception as exc:
+            self.status(str(exc), severity="fail")
+            return
+        try:
+            camera_snapshot, camera_context, camera_receipt = self.capture_camera_reference(request)
+        except Exception as exc:
+            camera_snapshot, camera_context, camera_receipt = {}, "", None
+            self.set_attr("camera_status", "Text", "Camera metadata unavailable; SHOT remains authoritative")
+        selection = (self.current_family(), self.current_mode(), self.current_preset())
+        source_key = camera_snapshot.get("source_key", "")
+        if request != getattr(self, "expander_last", None):
+            self.expander_original = request
+        self.expander_inflight = True
+        self.set_attr("expand_prompt", "Enabled", False)
+        self.set_attr("expand_prompt", "Text", "EXPANDING...")
+        self.set_attr("expander_status", "Text", "Expanding for %s..." % dict(FAMILY_LABELS).get(entry.family, entry.family))
+        opts = h3_compose_opts(graph, request, self.current_mode()) if entry.family == "MINIMAXH3" else {}
+        opts["camera_context"] = camera_context
+        def work():
+            try:
+                text, info = translator.expand_for_family(entry.family, graph, request, cfg=cfg, opts=opts)
+            except Exception as exc:
+                text, info = "", {"source": "error", "detail": str(exc)}
+            self.outbox.put({"kind": "expanded", "prompt": text, "info": info,
+                             "original_request": raw_request, "selection_key": selection, "source_key": source_key, "camera_context": camera_context})
+        self.expander_thread = threading.Thread(target=work, name="second-unit-prompt-expander", daemon=True)
+        self.expander_thread.start()
 
     def on_expanded(self, message):
-        self.set_attr("expand_prompt", "Enabled", True)
+        self.expander_inflight = False
+        self.set_attr("expand_prompt", "Enabled", self.current_family() in ("MINIMAXH3", "LTX25", "JUGGERNAUT"))
+        if message.get("selection_key") and tuple(message["selection_key"]) != (self.current_family(), self.current_mode(), self.current_preset()):
+            self.set_attr("expand_prompt", "Text", "PROMPT EXPANDER")
+            self.set_attr("expander_status", "Text", "Workflow changed while expanding. Your SHOT was kept; expand again for this model.")
+            return
         self.set_attr("expand_prompt", "Text", "PROMPT EXPANDER")
         if "original_request" in message and self.get_text("prompt") != message["original_request"]:
             self.set_attr("expander_status", "Text", "SHOT changed while expanding. Your newer text was kept; expand again when ready.")
+            return
+        if "source_key" in message and message["source_key"] != self.camera_source_key():
+            self.set_attr("expander_status", "Text", "Reference source changed while expanding. Your SHOT was kept.")
             return
         text = message.get("prompt") or ""
         info = message.get("info") or {}
@@ -10905,6 +11402,7 @@ class SecondUnitPanel(object):
         if not passthrough:
             self.set_attr("prompt", "PlainText", text)
             self.expander_last = text
+            self.expander_camera_context = message.get("camera_context") or ""
         self.set_attr("revert_prompt", "Enabled", bool(getattr(self, "expander_original", None)))
         if info.get("source") == "llm":
             source = "LLM: %s" % info.get("detail", "")
@@ -11010,15 +11508,18 @@ class SecondUnitPanel(object):
                     self.status(
                         "REFUSED: World Generation needs a complete wardrobe reference.", 0)
                     return
+            if entry.stamp.get("pipeline") == "h3_pose_follow" and not (prop1_path and prop2_path):
+                self.status("REFUSED: Pose Follow needs front, three-quarter, profile and body cards.", 0)
+                return
             if mode == "ENVSWAP" and entry.family == "LTX25":
                 if not prop1_path or not prop2_path:
                     self.status(
                         "REFUSED: LTX 2.5 World Generation needs Picture 4 and Picture 5 "
                         "prop references. Use the same prop sheet twice when both props share one image.", 0)
                     return
-            if mode == "T2V":
+            if mode in ("T2V", "STORYBOARD", "STILLS"):
                 source_path = ""
-            requested_seconds = parse_seconds(self.get_text("seconds"))
+            requested_seconds = 0 if mode in ("STORYBOARD", "STILLS") else parse_seconds(self.get_text("seconds"))
             exact_frames = getattr(self, "source_exact_frames", None)
             exact_fps = getattr(self, "source_exact_fps", None)
 
@@ -11041,10 +11542,17 @@ class SecondUnitPanel(object):
                     negative_note = ("  Note: the AVOID text was cleared - this preset runs at cfg 1 with its negative "
                                      "zeroed out, so every word is positive conditioning. Say what you want in SHOT.")
                     log("negative cleared for %s (cfg-1 zeroed negative)" % entry.name)
+            request = self.get_text("prompt") or ""
+            previous_context = getattr(self, "expander_camera_context", "")
+            if previous_context: request = request.replace(previous_context, "").strip()
+            snapshot, camera_context, camera_receipt = self.capture_camera_reference(request)
+            generation_prompt = camera_reference_module().add_context(request, camera_context)
             params = {
                 "entry": entry,
                 "mode": mode,
-                "prompt": self.get_text("prompt"),
+                "prompt": generation_prompt,
+                "camera_reference": snapshot,
+                "camera_reference_receipt": camera_receipt,
                 "negative": negative_text,
                 "seconds": requested_seconds,
                 "seed": parse_seed(self.get_text("seed")),
@@ -11070,7 +11578,7 @@ class SecondUnitPanel(object):
                 ),
                 "allow_cloud": self.get_checked("allow_cloud"),
                 "detail_upscale": (self.get_checked("detail_upscale")
-                                   and mode != "SEGMENT"
+                                   and mode not in ("SEGMENT", "STORYBOARD", "STILLS")
                                    and not is_detail_upscale_entry(entry)),
             }
         except SecondUnitError as exc:
@@ -11081,7 +11589,8 @@ class SecondUnitPanel(object):
             self.stop_event = threading.Event()
 
             self.ensure_second_unit_bin()
-            self.timeline_placement = rv_capture_placement(rv_current_project(self.resolve, self.injected_project))
+            self.timeline_placement = (None if mode in ("STORYBOARD", "STILLS") else
+                                      rv_capture_placement(rv_current_project(self.resolve, self.injected_project)))
             self.job = ExternalGenerateJob(
                 find_worker_python(), _self_path(), self.client, params, self.outbox,
                 cache_root=getattr(self, "job_cache_root", LAB_CACHE),
@@ -11475,7 +11984,37 @@ class SecondUnitPanel(object):
         finally:
             self._clearing_state = False
 
+    def finish_environment_storyboard(self, message):
+        paths = list(message.get("paths") or [])
+        succeeded = False
+        try:
+            expected = 1 if message.get("environment_still") else 5
+            if len(paths) != expected or len(set(paths)) != expected:
+                raise SecondUnitError("Expected %d environment PNG files." % expected)
+            for path in paths:
+                with open(path, "rb") as handle:
+                    if handle.read(8) != b"\x89PNG\r\n\x1a\n":
+                        raise SecondUnitError("Invalid reference PNG: %s" % path)
+            project = rv_current_project(self.resolve, self.injected_project)
+            if project is None:
+                raise SecondUnitError("Open a Resolve project to import the references.")
+            names, items = rv_import_clips(self.resolve, project, "Second Unit Environments", paths)
+            if len(items) != len(paths):
+                raise SecondUnitError("Resolve did not import all environment images; retry the import.")
+            self._clearing_state = True
+            try:
+                self.state("REFERENCES READY", text=("Environment still is in Second Unit Environments. Files: %s" if message.get("environment_still") else "Four individual references and the full storyboard are in Second Unit Environments. Files: %s") % os.path.dirname(paths[0]), progress=100)
+            finally:
+                self._clearing_state = False
+            succeeded = True
+        except Exception as exc:
+            self._landing_raised(exc, paths)
+        self.set_attr("generate", "Enabled", succeeded)
+        return succeeded
+
     def finish(self, message):
+        if message.get("storyboard"):
+            return self.finish_environment_storyboard(message)
         paths = message.get("paths") or []
         import_succeeded = False
         self.gate_warnings = list(message.get("warnings") or [])
@@ -11519,6 +12058,14 @@ class SecondUnitPanel(object):
         return import_succeeded
 
     def begin_landing(self, message):
+        if message.get("storyboard"):
+            if self.finish_environment_storyboard(message):
+                self.pending_delivery = None
+                if self.job:
+                    self.job.mark_consumed("done")
+            else:
+                self.pending_delivery = dict(message)
+            return
         if getattr(self, "landing", None):
             log("landing: already landing; %s waits for the next retry" % (message.get("prompt_id") or "done record"))
             self.pending_delivery = dict(message)
@@ -11649,10 +12196,10 @@ class SecondUnitPanel(object):
         else:
             _proven = sum(1 for e in self.entries if e.production_ready and e.proven)
             _hidden = sum(1 for e in self.entries if e.production_ready and not e.proven and not e.user_workflow)
-            note = (u"Ready · %d proven presets" % _proven) + (
+            note = (u"Ready Â· %d proven presets" % _proven) + (
                 u" (%d unproven hidden - Show unproven reveals them)" % _hidden if _hidden and not self.show_unproven() else "")
             if LAST_UI_SKIPPED > 0:
-                note += u" · %d UI-format file(s) ignored - see log" % LAST_UI_SKIPPED
+                note += u" Â· %d UI-format file(s) ignored - see log" % LAST_UI_SKIPPED
         readiness = self.first_run_status("open", server_probed=True)
         if readiness:
             note += u"   " + readiness

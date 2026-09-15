@@ -1,0 +1,396 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "LTX 2.5 22B distilled (bf16 - IC-LoRAs need bf16)"
+    },
+    "inputs": {
+      "unet_name": "ltx-2.5-22b-distilled-transformer-bf16.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "LTXICLoRALoaderModelOnly",
+    "_meta": {
+      "title": "OFFICIAL LTX 2.5 pixel spatial x2 \u2014 generative"
+    },
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "LTX2.5\\ltx-2.5-22b-ic-lora-pixel-spatial-upscaler-x2-1.0.safetensors",
+      "strength_model": 1.0
+    }
+  },
+  "3": {
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Gemma text encoder"
+    },
+    "inputs": {
+      "clip_name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "LTX video VAE"
+    },
+    "inputs": {
+      "vae_name": "ltx-2.5-video-vae-bf16.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "LTX audio VAE"
+    },
+    "inputs": {
+      "vae_name": "ltx-2.5-audio-vae-bf16.safetensors"
+    }
+  },
+  "6": {
+    "class_type": "VHS_LoadVideo",
+    "inputs": {
+      "video": "source-video.mp4",
+      "force_rate": 24.0,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 83,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "None"
+    },
+    "_meta": {
+      "title": "SOURCE VIDEO - set actual source frame count and fps",
+      "second_unit_role": "detail_source"
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Positive - source-faithful photographic detail"
+    },
+    "inputs": {
+      "clip": [
+        "3",
+        0
+      ],
+      "text": "A continuous photographic rendering of the supplied source video. Retain the same subjects, identity, facial and body proportions, pose, wardrobe, actions and timing. Keep the source camera, framing, perspective, geometry, lighting direction, exposure and colors. Refine only existing visible photographic materials and natural texture, without inventing pores, objects or unseen facial features. Preserve back-facing views and the source motion. No beauty smoothing, plastic skin, exaggerated texture, crunchy sharpening, relighting, camera changes or new cuts."
+    }
+  },
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Negative"
+    },
+    "inputs": {
+      "clip": [
+        "3",
+        0
+      ],
+      "text": ""
+    }
+  },
+  "9": {
+    "class_type": "LTXVConditioning",
+    "inputs": {
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "8",
+        0
+      ],
+      "frame_rate": 24.0
+    }
+  },
+  "10": {
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "NATIVE x2 CANVAS - match source width x2 and height x2 on32grid"
+    },
+    "inputs": {
+      "width": 3072,
+      "height": 1728,
+      "length": 89,
+      "batch_size": 1
+    }
+  },
+  "11": {
+    "class_type": "LTXAddVideoICLoRAGuide",
+    "_meta": {
+      "title": "SOURCE VIDEO IC GUIDE - strength1",
+      "second_unit_role": "detail_guide"
+    },
+    "inputs": {
+      "positive": [
+        "9",
+        0
+      ],
+      "negative": [
+        "9",
+        1
+      ],
+      "vae": [
+        "4",
+        0
+      ],
+      "latent": [
+        "10",
+        0
+      ],
+      "image": [
+        "32",
+        0
+      ],
+      "frame_idx": 0,
+      "strength": 1.0,
+      "latent_downscale_factor": [
+        "2",
+        1
+      ],
+      "crop": "disabled",
+      "use_tiled_encode": true,
+      "tile_size": 256,
+      "tile_overlap": 64
+    }
+  },
+  "12": {
+    "class_type": "LTXVEmptyLatentAudio",
+    "inputs": {
+      "audio_vae": [
+        "5",
+        0
+      ],
+      "frames_number": 89,
+      "frame_rate": 24.0,
+      "batch_size": 1
+    }
+  },
+  "13": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "video_latent": [
+        "11",
+        2
+      ],
+      "audio_latent": [
+        "12",
+        0
+      ]
+    }
+  },
+  "14": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 3101
+    }
+  },
+  "15": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "positive": [
+        "11",
+        0
+      ],
+      "negative": [
+        "11",
+        1
+      ],
+      "cfg": 1.0
+    }
+  },
+  "16": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    }
+  },
+  "17": {
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "distilled 8-step schedule"
+    },
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    }
+  },
+  "18": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "14",
+        0
+      ],
+      "guider": [
+        "15",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "17",
+        0
+      ],
+      "latent_image": [
+        "13",
+        0
+      ]
+    }
+  },
+  "19": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": {
+      "av_latent": [
+        "18",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "LTXVCropGuides",
+    "inputs": {
+      "positive": [
+        "11",
+        0
+      ],
+      "negative": [
+        "11",
+        1
+      ],
+      "latent": [
+        "19",
+        0
+      ]
+    }
+  },
+  "21": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+      "samples": [
+        "20",
+        2
+      ],
+      "vae": [
+        "4",
+        0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+    }
+  },
+  "22": {
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "SECOND UNIT PRORES HQ \u00c2\u00b7 1080P"
+    },
+    "inputs": {
+      "images": [
+        "34",
+        0
+      ],
+      "frame_rate": 24.0,
+      "loop_count": 0,
+      "filename_prefix": "SecondUnit/Detail/LTX25-Photographic-x2",
+      "format": "video/ProRes",
+      "profile": "hq",
+      "pingpong": false,
+      "save_output": true,
+      "audio": [
+        "6",
+        2
+      ]
+    }
+  },
+  "30": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "image": [
+        "6",
+        0
+      ],
+      "batch_index": 82,
+      "length": 1
+    },
+    "_meta": {
+      "title": "TAIL FRAME - source count minus1",
+      "second_unit_role": "detail_tail"
+    }
+  },
+  "31": {
+    "class_type": "RepeatImageBatch",
+    "inputs": {
+      "image": [
+        "30",
+        0
+      ],
+      "amount": 6
+    },
+    "_meta": {
+      "title": "TAIL REPEAT - pad source to8n+1",
+      "second_unit_role": "detail_repeat"
+    }
+  },
+  "32": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": [
+        "6",
+        0
+      ],
+      "image2": [
+        "31",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "SOURCE PLUS TAIL PADDING",
+      "second_unit_role": "detail_batch"
+    }
+  },
+  "33": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "image": [
+        "21",
+        0
+      ],
+      "batch_index": 0,
+      "length": 83
+    },
+    "_meta": {
+      "title": "SECOND UNIT EXACT FRAME TRIM",
+      "second_unit_role": "detail_trim"
+    }
+  },
+  "34": {
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "EXPORT SIZE -1280x720 /1920x1080 /3840x2160",
+      "second_unit_role": "delivery_scale"
+    },
+    "inputs": {
+      "image": [
+        "33",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": 1920,
+      "height": 1080,
+      "crop": "center"
+    }
+  }
+}

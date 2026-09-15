@@ -1017,6 +1017,103 @@ def expand_async(callback, *args, **kwargs):
     return t
 
 
+LTX25_EXPANSION_RULES = """You expand a dictated shot request for LTX 2.5 environment video generation.
+The operator's original words will be retained as the beginning of the final prompt, including all camera instructions. Supply ONLY 2-4 supplementary sentences of natural present-tense prose; no headings, tags, JSON, explanations, or repeated operator text.
+Expand concrete environment detail already specified by the operator. You have NOT seen the reference image; do not invent its contents, weather, terrain, lighting, colors or objects. For image-to-video, you may describe continuity of existing surfaces, lighting and spatial relationships, except where the operator explicitly requests a change.
+Do not add people, actors, animals, dialogue, speech or music. Do not invent camera motion or framing. Do not mention camera, pan, tilt, dolly, orbit, zoom, push, pull, track, crane, stationary, left, right, up, down, forward or backward: the original request already controls these. Do not change any requested movement, speed, duration, focus or composition. Do not invent cuts. Keep the setting physically coherent and the existing material textures photographic. Audio may only elaborate sounds explicitly requested. Keep additions under 90 words. Return only the supplementary prose."""
+
+_LTX_CAMERA_WORDS = re.compile(r"\b(?:camera|pan(?:s|ning)?|tilt(?:s|ing)?|doll(?:y|ies|ying)|orbit\w*|zoom\w*|push\w*|pull\w*|track\w*|cran(?:e|ing)|stationary|static|locked|handheld|left|right|up|down|forward|backward|backwards|reverse|rotate\w*|rotation|refram\w*|close[- ]?up|wide[- ]?shot|angle|cut|cuts|cutting|transition\w*|shot|framing|composition|lens|focal|focus|speed|accelerat\w*|decelerat\w*|movement|motion)\b", re.I)
+_LTX_PEOPLE_WORDS = re.compile(r"\b(?:person|people|actor\w*|human\w*|man|men|woman|women|child\w*|figure\w*|face\w*|skin|body|bodies|walk\w*|character\w*|animal\w*|dialogue|speech|voice\w*|music)\b", re.I)
+
+
+def expand_ltx25(request, graph, cfg=None, timeout=None):
+    """Preserve operator intent verbatim; add only environment continuity prose."""
+    base = (request or "").strip()
+    if not base:
+        raise ValueError("Describe the shot before expanding it.")
+    cfg = expander_config() if cfg is None else cfg
+    referenced = any(isinstance(n, dict) and n.get("class_type") in ("LoadImage", "LoadImageMask") for n in (graph or {}).values())
+    continuity = ("The reference environment remains spatially coherent as the requested changes unfold."
+                  if referenced else "The environment keeps coherent spatial relationships and consistent lighting throughout the take.")
+    fallback = base + (" " if base[-1:] in ".!?" else ". ") + continuity + " Fine surface detail remains natural and photographic."
+    attempts = []
+    if cfg.get("configured"):
+        try:
+            additions = _strip_fences(call_llm(LTX25_EXPANSION_RULES,
+                "Mode: %s. Operator request: %s" % ("image-to-video with an environment reference" if referenced else "text-to-video", base),
+                cfg, timeout=float(timeout or cfg.get("timeout") or EXPANDER_DEFAULT_TIMEOUT), temperature=0.2))
+            if not additions or len(additions.split()) > 120 or _LTX_CAMERA_WORDS.search(additions) or _LTX_PEOPLE_WORDS.search(additions):
+                raise ValueError("Expansion added camera/subject instructions or exceeded its scope; original intent retained")
+            if re.search(r"(?:<[^>]+>|^\s*[#{\[]|subject_definitions:|detailed_description:)", additions, re.M):
+                raise ValueError("Expansion returned another model's formatting")
+            text = base + (" " if base[-1:] in ".!?" else ". ") + " ".join(additions.split())
+            return text, {"source": "llm", "fallback": False, "issues": [], "detail": backend_label(cfg), "family": "LTX25"}
+        except Exception as exc:
+            attempts.append(str(exc)[:200])
+    return fallback, {"source": "template", "fallback": bool(cfg.get("configured")), "issues": [],
+                      "attempts": attempts, "family": "LTX25", "detail": "LTX 2.5 continuity prose; operator camera request retained"}
+
+
+JUGGERNAUT_EXPANSION_RULES = """You expand a film crew's dictated environment request for Juggernaut XL v9, an SDXL still-image workflow.
+The original request is kept verbatim at the start of the final positive prompt. Return ONLY 2-4 supplementary natural-language sentences for ONE photographic still, under 60 words. Do not return a prompt heading, tags, JSON, weighting syntax or a negative prompt.
+Elaborate material texture, physical scale and detail already justified by the request. Preserve every constraint: the setting, camera position, viewing direction, framing, lens, depth of field, lighting, weather, color and exclusions. Do not add or restate camera choices or lighting choices in your supplement; those are already controlled by the original request. Do not invent terrain, props, people, actors, animals, vehicles or structures. If something was not specified, keep the description neutral rather than choose it for the operator.
+This is NOT video. Do not introduce camera movement, animation, action sequences, durations, transitions, chronological beats, dialogue, audio or soundtracks. Never use H3 reference sections or LTX video phrasing. A requested drop of water or mist may be described as visible in a single instant. Keep the result physically plausible and photographic. Return only the supplementary still-image prose."""
+
+_JUGGERNAUT_VIDEO_WORDS = re.compile(r"\b(?:video|animation|animat\w*|sequence|timeline|duration|second|seconds|minute|minutes|throughout|then|eventually|begins?|ends?|unfold\w*|audio|sound\w*|soundtrack|music|dialogue|speech|footsteps|continu(?:ous|ity)|take)\b", re.I)
+_JUGGERNAUT_LIGHT_WORDS = re.compile(r"\b(?:sunlight|daylight|moonlight|neon|spotlight|sunrise|sunset|golden|warm|cool|blue|red|orange|green|purple|pink|yellow|white|black|night|day|bright|dark)\b", re.I)
+
+
+def expand_juggernaut(request, cfg=None, timeout=None):
+    """Expand environment still detail without altering the operator's constraints."""
+    base = (request or "").strip()
+    if not base:
+        raise ValueError("Describe the environment before expanding it.")
+    cfg = expander_config() if cfg is None else cfg
+    joiner = " " if base[-1:] in ".!?" else ". "
+    fallback = base + joiner + "Photographic material detail and physically coherent scale define the environment. Surface textures are natural and believable."
+    attempts = []
+    if cfg.get("configured"):
+        try:
+            additions = _strip_fences(call_llm(JUGGERNAUT_EXPANSION_RULES,
+                "Operator's still-image request: " + base, cfg,
+                timeout=float(timeout or cfg.get("timeout") or EXPANDER_DEFAULT_TIMEOUT), temperature=0.2))
+            light_words = set(re.findall(r"\w+", base.lower()))
+            if "night" in light_words:
+                light_words.add("dark")
+            if "blue" in light_words:
+                light_words.add("cool")
+            changed_light = any(word.lower() not in light_words
+                                for word in _JUGGERNAUT_LIGHT_WORDS.findall(additions))
+            if (not additions or len(additions.split()) > 80 or _LTX_CAMERA_WORDS.search(additions)
+                    or _LTX_PEOPLE_WORDS.search(additions) or _JUGGERNAUT_VIDEO_WORDS.search(additions) or changed_light):
+                raise ValueError("Still expansion added camera, lighting, subject or video instructions; original intent retained")
+            if re.search(r"(?:<[^>]+>|^\s*[#{\[]|subject_definitions:|detailed_description:)", additions, re.M):
+                raise ValueError("Still expansion returned incompatible model formatting")
+            return base + joiner + " ".join(additions.split()), {
+                "source": "llm", "fallback": False, "issues": [], "detail": backend_label(cfg), "family": "JUGGERNAUT"}
+        except Exception as exc:
+            attempts.append(str(exc)[:200])
+    return fallback, {"source": "template", "fallback": bool(cfg.get("configured")), "issues": [],
+                      "attempts": attempts, "family": "JUGGERNAUT", "detail": "Juggernaut environment still prose; operator constraints retained"}
+
+
+def expand_for_family(family, graph, request, cfg=None, opts=None, **kwargs):
+    """Select generation-model instructions independently of the configured LLM provider."""
+    context = (opts or {}).get("camera_context") or ""
+    if context and context not in request:
+        request = request.rstrip() + "\n" + context
+    if family == "MINIMAXH3":
+        mode, refs = refs_from_graph(graph)
+        if mode is None:
+            raise ValueError("The selected H3 workflow has no supported reference mode.")
+        return expand(mode, refs, request, duration_seconds(graph), opts or {}, cfg=cfg, **kwargs)
+    if family == "LTX25":
+        return expand_ltx25(request, graph, cfg=cfg, timeout=kwargs.get("timeout"))
+    if family == "JUGGERNAUT":
+        return expand_juggernaut(request, cfg=cfg, timeout=kwargs.get("timeout"))
+    raise ValueError("Prompt expansion supports Juggernaut XL v9, MiniMax H3 and LTX 2.5 for this panel.")
+
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):

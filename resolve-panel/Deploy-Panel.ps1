@@ -34,7 +34,7 @@ if ((Get-Process Resolve -ErrorAction SilentlyContinue) -and -not $PanelClosedCo
 $Cache = Join-Path $env:LOCALAPPDATA 'SecondUnit\preview-cache'
 $Backup = Join-Path $env:LOCALAPPDATA ('SecondUnit\install-backups\' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8))
 New-Item -ItemType Directory -Path $Cache,$Backup -Force | Out-Null
-$Names = @('Second Unit.py','h3_prompt_translator.py','second-unit-home.json','second-unit.json')
+$Names = @('Second Unit.py','h3_prompt_translator.py','camera_reference.py','second-unit-home.json','second-unit.json')
 $Existed = @{}
 foreach ($Name in $Names) {
     $Dest = Join-Path $TargetRoot $Name
@@ -59,8 +59,9 @@ try {
     [IO.File]::WriteAllText((Join-Path $TargetRoot 'second-unit-home.json'), ($HomeData | ConvertTo-Json), $Utf8)
     [IO.File]::WriteAllText($ConfigFile, ($Config | ConvertTo-Json -Depth 8), $Utf8)
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'h3_prompt_translator.py') -Destination (Join-Path $TargetRoot 'h3_prompt_translator.py') -Force
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'camera_reference.py') -Destination (Join-Path $TargetRoot 'camera_reference.py') -Force
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'SecondUnit.py') -Destination (Join-Path $TargetRoot 'Second Unit.py') -Force
-    foreach ($Pair in @(@('SecondUnit.py','Second Unit.py'),@('h3_prompt_translator.py','h3_prompt_translator.py'))) {
+    foreach ($Pair in @(@('SecondUnit.py','Second Unit.py'),@('h3_prompt_translator.py','h3_prompt_translator.py'),@('camera_reference.py','camera_reference.py'))) {
         if ((Get-FileHash -LiteralPath (Join-Path $PSScriptRoot $Pair[0])).Hash -ne (Get-FileHash -LiteralPath (Join-Path $TargetRoot $Pair[1])).Hash) { throw 'Installed file does not match package.' }
     }
 } catch {

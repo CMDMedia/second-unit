@@ -1,0 +1,467 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "minimax_h3_ref2va_pruned_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "H3 REF2VA - BF16 BASE"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "MiniMax H3 Qwen3-VL INT8 ConvRot"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "MiniMax H3 Video VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "MiniMax H3 Audio VAE"
+    }
+  },
+  "5": {
+    "inputs": {
+      "shift_video": 12,
+      "shift_audio": 3,
+      "model": [
+        "24",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3SigmaShift",
+    "_meta": {
+      "title": "H3 Sigma Shift 12 Video / 3 Audio"
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "identity-front.png"
+    },
+    "_meta": {
+      "title": "REAL ACTOR CARD - FRONT",
+      "second_unit_role": "pose_identity_front"
+    }
+  },
+  "9": {
+    "inputs": {
+      "prompt": "camera motion. r34l1sm. Use the four actor reference cards for one consistent person and the environment reference for the destination. Preserve the source performance and cautious gait. Continuous follow shot without cuts. Natural photographic skin, wardrobe and lighting.",
+      "width": 1536,
+      "height": 864,
+      "length": [
+        "30",
+        2
+      ],
+      "ref_image_size": "max",
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "ref_images.ref_image_0": [
+        "7",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "19",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "20",
+        0
+      ],
+      "ref_images.ref_image_3": [
+        "21",
+        0
+      ],
+      "ref_images.ref_image_4": [
+        "8",
+        0
+      ],
+      "ref_videos.ref_video_0": [
+        "32",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "_meta": {
+      "title": "REAL CARDS + CAVE + SOURCE PERFORMANCE - CONTINUOUS NO CUTS",
+      "second_unit_role": "pose_h3"
+    }
+  },
+  "10": {
+    "inputs": {
+      "noise_seed": 20260916
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "Seed"
+    }
+  },
+  "11": {
+    "inputs": {
+      "model": [
+        "27",
+        0
+      ],
+      "conditioning": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "Basic Guider"
+    }
+  },
+  "12": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "Publisher Sampler - Euler"
+    }
+  },
+  "13": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 4,
+      "denoise": 1,
+      "model": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "4 STEPS EULER SIMPLE - CFG1 VIA BASICGUIDER"
+    }
+  },
+  "14": {
+    "inputs": {
+      "noise": [
+        "10",
+        0
+      ],
+      "guider": [
+        "11",
+        0
+      ],
+      "sampler": [
+        "12",
+        0
+      ],
+      "sigmas": [
+        "13",
+        0
+      ],
+      "latent_image": [
+        "9",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "Base BF16 + Ref2V4 + real character cards - candidate"
+    }
+  },
+  "15": {
+    "inputs": {
+      "samples": [
+        "14",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Decode Generated Video"
+    }
+  },
+  "16": {
+    "inputs": {
+      "frame_rate": 24,
+      "loop_count": 0,
+      "filename_prefix": "SecondUnit/Tests/Pose-Follow/H3-Cave-Pose-Follow-SingleGraph",
+      "format": "video/h264-mp4",
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "31",
+        0
+      ],
+      "audio": [
+        "18",
+        0
+      ],
+      "pix_fmt": "yuv420p",
+      "crf": 18
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "RAW H3 OUTPUT - NO UPSCALE",
+      "second_unit_role": "pose_output"
+    }
+  },
+  "8": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "environment.png"
+    },
+    "_meta": {
+      "title": "NEW JUGGERNAUT CAVE - PICTURE 5",
+      "second_unit_role": "pose_environment"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": [
+        "14",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "GENERATED CAVE AMBIENCE - NO REFERENCE AUDIO"
+    }
+  },
+  "17": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "lora_name": "minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "_meta": {
+      "title": "PUBLISHER REF2V 4-STEP LORA - 1.0"
+    }
+  },
+  "19": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "identity-threequarter.png"
+    },
+    "_meta": {
+      "title": "REAL ACTOR CARD - THREEQUARTER",
+      "second_unit_role": "pose_identity_threequarter"
+    }
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "identity-profile.png"
+    },
+    "_meta": {
+      "title": "REAL ACTOR CARD - PROFILE",
+      "second_unit_role": "pose_identity_profile"
+    }
+  },
+  "21": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "identity-body.png"
+    },
+    "_meta": {
+      "title": "REAL ACTOR CARD - BODY",
+      "second_unit_role": "pose_identity_body"
+    }
+  },
+  "22": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "17",
+        0
+      ],
+      "lora_name": "h3-realism-people-t2v-i2v-r2v.safetensors",
+      "strength_model": 0.6
+    },
+    "_meta": {
+      "title": "H3 REALISM PEOPLE - LIGHT 0.6"
+    }
+  },
+  "24": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "22",
+        0
+      ],
+      "lora_name": "MiniMax-H3\\camera_motion_h3_lora_v1_3000_pruned.safetensors",
+      "strength_model": 0.4
+    },
+    "_meta": {
+      "title": "CAMERA MOTION0.4 - PRIORITIZE POSE"
+    }
+  },
+  "26": {
+    "class_type": "ModelPatchLoader",
+    "inputs": {
+      "name": "minimax_h3_fun_controlnet_union_pruned_int8_convrot.safetensors"
+    },
+    "_meta": {
+      "title": "NATIVE H3 POSE CONTROLNET - PRUNED CURVE-FORM"
+    }
+  },
+  "27": {
+    "class_type": "MiniMaxH3FunControlNetApply",
+    "inputs": {
+      "model": [
+        "5",
+        0
+      ],
+      "model_patch": [
+        "26",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "strength": 1.0,
+      "start_percent": 0.0,
+      "end_percent": 1.0,
+      "control_video": [
+        "30",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ACTUAL FRAMEWISE POSE CONTROL1.0 - FULL SCHEDULE"
+    }
+  },
+  "28": {
+    "class_type": "VHS_LoadVideo",
+    "inputs": {
+      "video": "source-video-24fps-1536x864-with-audio.mp4",
+      "force_rate": 24,
+      "custom_width": 0,
+      "custom_height": 0,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "None"
+    },
+    "_meta": {
+      "title": "SOURCE VIDEO -24fps1536x864 - single actor",
+      "second_unit_role": "pose_source"
+    }
+  },
+  "32": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "28",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": 1536,
+      "height": 864,
+      "crop": "disabled"
+    },
+    "_meta": {
+      "title": "NATIVE1536x864 SOURCE - USE16:9 FOOTAGE",
+      "second_unit_role": "pose_source_scale"
+    }
+  },
+  "29": {
+    "class_type": "DWPreprocessor",
+    "inputs": {
+      "image": [
+        "32",
+        0
+      ],
+      "detect_hand": "enable",
+      "detect_body": "enable",
+      "detect_face": "enable",
+      "resolution": 864,
+      "bbox_detector": "yolox_l.onnx",
+      "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
+      "scale_stick_for_xinsr_cn": "disable"
+    },
+    "_meta": {
+      "title": "EXTRACT CURRENT ACTOR POSE - EVERY FRAME"
+    }
+  },
+  "30": {
+    "class_type": "SecondUnitPoseFollowGuide",
+    "inputs": {
+      "images": [
+        "29",
+        0
+      ],
+      "pose_kps": [
+        "29",
+        1
+      ],
+      "smoothing_window": 9,
+      "target_x": 0.49,
+      "target_feet_y": 0.92,
+      "target_body_height": 0.69,
+      "scale_response": 0.7,
+      "min_scale": 0.95,
+      "max_scale": 1.12,
+      "pad_for_h3": true
+    },
+    "_meta": {
+      "title": "FOLLOW POSE -2D APPROXIMATION / AUTO TAIL PAD",
+      "second_unit_role": "pose_follow"
+    }
+  },
+  "31": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "image": [
+        "15",
+        0
+      ],
+      "batch_index": 0,
+      "length": [
+        "30",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "REMOVE ONLY TECHNICAL TAIL - KEEP ALL SOURCE FRAMES"
+    }
+  }
+}
