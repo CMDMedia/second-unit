@@ -962,9 +962,9 @@
         "Node name for S&R": "MiniMaxH3FunControlNetApply"
       },
       "widgets_values": [
-        1.0,
+        0.35,
         0.0,
-        1.0
+        0.6
       ]
     },
     {

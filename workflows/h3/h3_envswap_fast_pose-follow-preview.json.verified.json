@@ -1,14 +1,14 @@
-{
-  "graph": "h3_envswap_fast_pose-follow-preview.json",
-  "graph_sha256": "56f26891d6f306f7b99f74ad4cd54b539ca6cb8d7194c1678dd47940d69403d1",
-  "local": true,
-  "production_ready": false,
-  "user_requested_candidate": false,
-  "user_workflow": false,
-  "experimental": true,
-  "validation_status": "failed-visual-review",
-  "release_eligible": false,
-  "pipeline": "h3_pose_follow",
-  "display_name": "REPAIR ONLY - H3 Pose Follow",
-  "validation_scope": "Pose-guide artifacts are visible in generated output. Not approved for generation; retained for repair only."
+﻿{
+    "graph":  "h3_envswap_fast_pose-follow-preview.json",
+    "graph_sha256":  "ff5d8b1051033a191525a257c4edc430feaa58d884b1f5960edab3ac01b8dc82",
+    "local":  true,
+    "production_ready":  false,
+    "user_requested_candidate":  false,
+    "user_workflow":  false,
+    "experimental":  true,
+    "validation_status":  "preview - prior full-strength run rejected: guide leakage",
+    "release_eligible":  false,
+    "pipeline":  "h3_pose_follow",
+    "display_name":  "REPAIR ONLY - H3 Pose Follow",
+    "validation_scope":  "ControlNet strength0.35, end_percent0.6; one continuous follow; raw1536x864; no LTX or RTX upscale; rerender required"
 }
