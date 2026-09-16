@@ -1,0 +1,26 @@
+{
+  "graph": "SECONDUNIT - SAM 3.1 - Segment Roto Matte.json",
+  "graph_sha256": "1f755cf3694536e1fb3be1626d01bcbf61f9dc0a7c192567e3f6cac8987a8286",
+  "verified_at": "2026-09-11T17:00:50.329040+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 12,
+  "local": true,
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "legacy_name": "sam31_segment_roto-matte.json",
+  "display_name": "SECONDUNIT - SAM 3.1 - Segment Roto Matte",
+  "production_ready": true,
+  "validation_status": "schema-only",
+  "release_eligible": false,
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet."
+}

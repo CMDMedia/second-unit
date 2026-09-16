@@ -1,11 +1,11 @@
 {
-  "last_node_id": 32,
-  "last_link_id": 32,
+  "last_node_id": 94,
+  "last_link_id": 42,
   "nodes": [
     {
       "id": 1,
       "type": "UNETLoader",
-      "title": "H3 REF2VA - BF16 BASE",
+      "title": "H3 REF2VA INT8 - compact model",
       "pos": [
         0,
         0
@@ -23,15 +23,16 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            20
+            26
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "UNETLoader"
+        "Node name for S&R": "UNETLoader",
+        "second_unit_role": ""
       },
       "widgets_values": [
-        "minimax_h3_ref2va_pruned_bf16.safetensors",
+        "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
         "default"
       ]
     },
@@ -61,7 +62,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "CLIPLoader"
+        "Node name for S&R": "CLIPLoader",
+        "second_unit_role": ""
       },
       "widgets_values": [
         "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
@@ -91,13 +93,14 @@
           "type": "VAE",
           "links": [
             4,
-            15,
-            25
+            21,
+            29
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "VAELoader"
+        "Node name for S&R": "VAELoader",
+        "second_unit_role": ""
       },
       "widgets_values": [
         "minimax_h3_video_vae_fp16.safetensors"
@@ -125,12 +128,13 @@
           "type": "VAE",
           "links": [
             5,
-            19
+            25
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "VAELoader"
+        "Node name for S&R": "VAELoader",
+        "second_unit_role": ""
       },
       "widgets_values": [
         "minimax_h3_audio_vae_fp32.safetensors"
@@ -163,12 +167,13 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            23
+            27
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "MiniMaxH3SigmaShift"
+        "Node name for S&R": "MiniMaxH3SigmaShift",
+        "second_unit_role": ""
       },
       "widgets_values": [
         12,
@@ -195,7 +200,9 @@
         {
           "name": "IMAGE",
           "type": "IMAGE",
-          "links": []
+          "links": [
+            6
+          ]
         },
         {
           "name": "MASK",
@@ -204,7 +211,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "LoadImage",
+        "second_unit_role": "pose_identity_front"
       },
       "widgets_values": [
         "identity-front.png",
@@ -249,6 +257,36 @@
           "name": "audio_vae",
           "type": "VAE",
           "link": 5
+        },
+        {
+          "name": "ref_images.ref_image_0",
+          "type": "IMAGE",
+          "link": 6
+        },
+        {
+          "name": "ref_images.ref_image_1",
+          "type": "IMAGE",
+          "link": 7
+        },
+        {
+          "name": "ref_images.ref_image_2",
+          "type": "IMAGE",
+          "link": 8
+        },
+        {
+          "name": "ref_images.ref_image_3",
+          "type": "IMAGE",
+          "link": 9
+        },
+        {
+          "name": "ref_images.ref_image_4",
+          "type": "IMAGE",
+          "link": 10
+        },
+        {
+          "name": "ref_videos.ref_video_0",
+          "type": "IMAGE",
+          "link": 11
         }
       ],
       "outputs": [
@@ -256,22 +294,23 @@
           "name": "positive",
           "type": "CONDITIONING",
           "links": [
-            7
+            13
           ]
         },
         {
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            13
+            19
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "MiniMaxH3ReferenceToVideo"
+        "Node name for S&R": "MiniMaxH3ReferenceToVideo",
+        "second_unit_role": "pose_h3"
       },
       "widgets_values": [
-        "camera motion. r34l1sm. Use the four actor reference cards for one consistent person and the environment reference for the destination. Preserve the source performance and cautious gait. Continuous follow shot without cuts. Natural photographic skin, wardrobe and lighting.",
+        "subject_definitions:\n<Subject 1> is the performer of <Video 1> and the same person shown in <Picture 1>, <Picture 2>, <Picture 3>: every one of these pictures shows this one person and they are fused as complementary evidence of one identity. He keeps a complete body exactly where the footage places it.\n<Subject 2> is the costume shown in <Picture 4>: the garments exactly as pictured, their tailoring, layering, colour, weave, wear and fastenings.\n<Subject 3> is the location shown in <Picture 5>: its geometry, props and materials. Replace the studio with the limestone cave in the environment reference.\n<Video 1> is the performance and timing reference for a shot with the newly requested camera.\n\nsummary:\n[reference generation + video editing] The target video is an edited version of <Video 1>. <Subject 1> wearing <Subject 2> performs exactly as in <Video 1>, at the same timing, seen from the requested camera angle, relocated into <Subject 3>. Replace the studio with the limestone cave in the environment reference. Preserve the same performer, dark quilted jacket, blue jeans, shoes and all source movements and head turns at their original times. One continuous full-body rear three-quarter following shot; keep both feet visible. The target video is one single continuous shot from its first frame to its last frame.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_preserved - the performer's identity, face, skin, build, pose sequence, gesture timing, head turns, eye-line, expression timing and mouth movement are retained; the pictures' framing, head size, angle and lighting are left behind.\n<Subject 2> (appears in [Shot 1]): attribute_transfer - the costume is transferred onto <Subject 1> for the whole shot, fitted to the target performer's proportions; the costume pictures' faces, body proportions, shoulder width, torso bulk, poses, framing and lighting are left behind.\n<Subject 3> (appears in [Shot 1]): fully_preserved - the location's geometry, props and materials are retained; its lighting is the lighting described below.\n<Video 1> (performance: pose sequence, body language, gesture timing, head turns, eye-line, expression timing, mouth movement): fully_preserved - reproduced from the source performance.\n<Video 1> (framing and camera): weak_reference - the source camera position, framing and shot scale are left behind; the shot is re-staged from the camera described below, with the timing and performance kept.\n<Video 1> (action timing): fully_preserved - each footfall, head turn, gesture and change of body orientation occurs at its original source timestamp and speed. The recorded acting remains the motion authority when the camera moves.\n<Video 1> (environment): weak_reference - the source location is replaced by <Subject 3>.\n<Video 1> (shot structure and pacing): weak_reference - the target video is one single continuous take, a single uninterrupted run of the camera from the first frame to the last frame; whatever the source contains, the target is one shot.\n\ndetailed_description:\nThe target video is live-action, cinematic, photographed on a large-format digital cinema camera with a shallow depth of field, a single continuous take.\n[Shot 1] The requested camera angle and composition frame <Subject 1> wearing <Subject 2>. Replace the studio with the limestone cave in the environment reference. Preserve the same performer, dark quilted jacket, blue jeans, shoes and all source movements and head turns at their original times. One continuous full-body rear three-quarter following shot; keep both feet visible. The take runs unbroken from the first frame to the last frame.\n\noverall_soundscape:\nQuiet room tone continues throughout, with the soft physical sounds of the subject's movement.\n\nnon_diegetic_music:\nN/A",
         1536,
         864,
         124,
@@ -299,12 +338,13 @@
           "name": "NOISE",
           "type": "NOISE",
           "links": [
-            9
+            15
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "RandomNoise"
+        "Node name for S&R": "RandomNoise",
+        "second_unit_role": ""
       },
       "widgets_values": [
         20260916,
@@ -330,12 +370,12 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 6
+          "link": 12
         },
         {
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 7
+          "link": 13
         }
       ],
       "outputs": [
@@ -343,12 +383,13 @@
           "name": "GUIDER",
           "type": "GUIDER",
           "links": [
-            10
+            16
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "BasicGuider"
+        "Node name for S&R": "BasicGuider",
+        "second_unit_role": ""
       },
       "widgets_values": []
     },
@@ -373,12 +414,13 @@
           "name": "SAMPLER",
           "type": "SAMPLER",
           "links": [
-            11
+            17
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "KSamplerSelect"
+        "Node name for S&R": "KSamplerSelect",
+        "second_unit_role": ""
       },
       "widgets_values": [
         "euler"
@@ -403,7 +445,7 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 8
+          "link": 14
         }
       ],
       "outputs": [
@@ -411,12 +453,13 @@
           "name": "SIGMAS",
           "type": "SIGMAS",
           "links": [
-            12
+            18
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "BasicScheduler"
+        "Node name for S&R": "BasicScheduler",
+        "second_unit_role": ""
       },
       "widgets_values": [
         "simple",
@@ -443,27 +486,27 @@
         {
           "name": "noise",
           "type": "NOISE",
-          "link": 9
+          "link": 15
         },
         {
           "name": "guider",
           "type": "GUIDER",
-          "link": 10
+          "link": 16
         },
         {
           "name": "sampler",
           "type": "SAMPLER",
-          "link": 11
+          "link": 17
         },
         {
           "name": "sigmas",
           "type": "SIGMAS",
-          "link": 12
+          "link": 18
         },
         {
           "name": "latent_image",
           "type": "LATENT",
-          "link": 13
+          "link": 19
         }
       ],
       "outputs": [
@@ -471,8 +514,8 @@
           "name": "output",
           "type": "LATENT",
           "links": [
-            14,
-            18
+            20,
+            24
           ]
         },
         {
@@ -482,7 +525,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "SamplerCustomAdvanced"
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "second_unit_role": ""
       },
       "widgets_values": []
     },
@@ -505,12 +549,12 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 14
+          "link": 20
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 15
+          "link": 21
         }
       ],
       "outputs": [
@@ -518,12 +562,13 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            31
+            35
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "VAEDecode"
+        "Node name for S&R": "VAEDecode",
+        "second_unit_role": ""
       },
       "widgets_values": []
     },
@@ -546,12 +591,12 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 16
+          "link": 22
         },
         {
           "name": "audio",
           "type": "AUDIO",
-          "link": 17
+          "link": 23
         }
       ],
       "outputs": [
@@ -562,19 +607,20 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "VHS_VideoCombine"
+        "Node name for S&R": "VHS_VideoCombine",
+        "second_unit_role": "pose_output"
       },
       "widgets_values": {
         "frame_rate": 24,
         "loop_count": 0,
         "filename_prefix": "SecondUnit/Tests/Pose-Follow/H3-Cave-Pose-Follow-SingleGraph",
-        "format": "video/h264-mp4",
+        "format": "video/ProRes",
         "save_metadata": true,
         "trim_to_audio": false,
         "pingpong": false,
         "save_output": true,
         "pix_fmt": "yuv420p",
-        "crf": 18
+        "profile": "hq"
       }
     },
     {
@@ -597,7 +643,9 @@
         {
           "name": "IMAGE",
           "type": "IMAGE",
-          "links": []
+          "links": [
+            10
+          ]
         },
         {
           "name": "MASK",
@@ -606,7 +654,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "LoadImage",
+        "second_unit_role": "pose_environment"
       },
       "widgets_values": [
         "environment.png",
@@ -632,12 +681,12 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 18
+          "link": 24
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 19
+          "link": 25
         }
       ],
       "outputs": [
@@ -645,12 +694,13 @@
           "name": "AUDIO",
           "type": "AUDIO",
           "links": [
-            17
+            23
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "VAEDecodeAudio"
+        "Node name for S&R": "VAEDecodeAudio",
+        "second_unit_role": ""
       },
       "widgets_values": []
     },
@@ -673,7 +723,7 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 20
+          "link": 26
         }
       ],
       "outputs": [
@@ -681,12 +731,13 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            21
+            1
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "LoraLoaderModelOnly"
+        "Node name for S&R": "LoraLoaderModelOnly",
+        "second_unit_role": ""
       },
       "widgets_values": [
         "minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors",
@@ -713,7 +764,9 @@
         {
           "name": "IMAGE",
           "type": "IMAGE",
-          "links": []
+          "links": [
+            7
+          ]
         },
         {
           "name": "MASK",
@@ -722,7 +775,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "LoadImage",
+        "second_unit_role": "pose_identity_threequarter"
       },
       "widgets_values": [
         "identity-threequarter.png",
@@ -749,7 +803,9 @@
         {
           "name": "IMAGE",
           "type": "IMAGE",
-          "links": []
+          "links": [
+            8
+          ]
         },
         {
           "name": "MASK",
@@ -758,7 +814,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "LoadImage",
+        "second_unit_role": "pose_identity_profile"
       },
       "widgets_values": [
         "identity-profile.png",
@@ -785,7 +842,9 @@
         {
           "name": "IMAGE",
           "type": "IMAGE",
-          "links": []
+          "links": [
+            9
+          ]
         },
         {
           "name": "MASK",
@@ -794,7 +853,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "LoadImage",
+        "second_unit_role": "pose_identity_body"
       },
       "widgets_values": [
         "identity-body.png",
@@ -802,9 +862,9 @@
       ]
     },
     {
-      "id": 22,
-      "type": "LoraLoaderModelOnly",
-      "title": "H3 REALISM PEOPLE - LIGHT 0.6",
+      "id": 26,
+      "type": "ModelPatchLoader",
+      "title": "NATIVE H3 POSE CONTROLNET - PRUNED CURVE-FORM",
       "pos": [
         880,
         2400
@@ -816,34 +876,28 @@
       "flags": {},
       "order": 20,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "model",
-          "type": "MODEL",
-          "link": 21
-        }
-      ],
+      "inputs": [],
       "outputs": [
         {
-          "name": "MODEL",
-          "type": "MODEL",
+          "name": "MODEL_PATCH",
+          "type": "MODEL_PATCH",
           "links": [
-            22
+            28
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "LoraLoaderModelOnly"
+        "Node name for S&R": "ModelPatchLoader",
+        "second_unit_role": ""
       },
       "widgets_values": [
-        "h3-realism-people-t2v-i2v-r2v.safetensors",
-        0.6
+        "minimax_h3_fun_controlnet_union_pruned_int8_convrot.safetensors"
       ]
     },
     {
-      "id": 24,
-      "type": "LoraLoaderModelOnly",
-      "title": "CAMERA MOTION0.4 - PRIORITIZE POSE",
+      "id": 27,
+      "type": "MiniMaxH3FunControlNetApply",
+      "title": "POSE CONTROL 0.6 - full schedule",
       "pos": [
         0,
         2800
@@ -859,7 +913,22 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 22
+          "link": 27
+        },
+        {
+          "name": "model_patch",
+          "type": "MODEL_PATCH",
+          "link": 28
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 29
+        },
+        {
+          "name": "control_video",
+          "type": "IMAGE",
+          "link": 30
         }
       ],
       "outputs": [
@@ -867,22 +936,24 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            1
+            37
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "LoraLoaderModelOnly"
+        "Node name for S&R": "MiniMaxH3FunControlNetApply",
+        "second_unit_role": ""
       },
       "widgets_values": [
-        "MiniMax-H3\\camera_motion_h3_lora_v1_3000_pruned.safetensors",
-        0.4
+        0.6,
+        0.0,
+        1.0
       ]
     },
     {
-      "id": 26,
-      "type": "ModelPatchLoader",
-      "title": "NATIVE H3 POSE CONTROLNET - PRUNED CURVE-FORM",
+      "id": 28,
+      "type": "VHS_LoadVideo",
+      "title": "SOURCE VIDEO -24fps1536x864 - single actor",
       "pos": [
         440,
         2800
@@ -897,98 +968,10 @@
       "inputs": [],
       "outputs": [
         {
-          "name": "MODEL_PATCH",
-          "type": "MODEL_PATCH",
-          "links": [
-            24
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ModelPatchLoader"
-      },
-      "widgets_values": [
-        "minimax_h3_fun_controlnet_union_pruned_int8_convrot.safetensors"
-      ]
-    },
-    {
-      "id": 27,
-      "type": "MiniMaxH3FunControlNetApply",
-      "title": "ACTUAL FRAMEWISE POSE CONTROL1.0 - FULL SCHEDULE",
-      "pos": [
-        880,
-        2800
-      ],
-      "size": [
-        400,
-        340
-      ],
-      "flags": {},
-      "order": 23,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "model",
-          "type": "MODEL",
-          "link": 23
-        },
-        {
-          "name": "model_patch",
-          "type": "MODEL_PATCH",
-          "link": 24
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "link": 25
-        },
-        {
-          "name": "control_video",
-          "type": "IMAGE",
-          "link": 26
-        }
-      ],
-      "outputs": [
-        {
-          "name": "MODEL",
-          "type": "MODEL",
-          "links": [
-            6,
-            8
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "MiniMaxH3FunControlNetApply"
-      },
-      "widgets_values": [
-        0.35,
-        0.0,
-        0.6
-      ]
-    },
-    {
-      "id": 28,
-      "type": "VHS_LoadVideo",
-      "title": "SOURCE VIDEO -24fps1536x864 - single actor",
-      "pos": [
-        0,
-        3200
-      ],
-      "size": [
-        400,
-        340
-      ],
-      "flags": {},
-      "order": 24,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            27
+            31
           ]
         },
         {
@@ -1008,7 +991,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "VHS_LoadVideo"
+        "Node name for S&R": "VHS_LoadVideo",
+        "second_unit_role": "pose_source"
       },
       "widgets_values": {
         "video": "source-video-24fps-1536x864-with-audio.mp4",
@@ -1026,21 +1010,21 @@
       "type": "ImageScale",
       "title": "NATIVE1536x864 SOURCE - USE16:9 FOOTAGE",
       "pos": [
-        440,
-        3200
+        880,
+        2800
       ],
       "size": [
         400,
         340
       ],
       "flags": {},
-      "order": 25,
+      "order": 23,
       "mode": 0,
       "inputs": [
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 27
+          "link": 31
         }
       ],
       "outputs": [
@@ -1048,12 +1032,14 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            28
+            32,
+            38
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "ImageScale"
+        "Node name for S&R": "ImageScale",
+        "second_unit_role": "pose_source_scale"
       },
       "widgets_values": [
         "lanczos",
@@ -1067,7 +1053,7 @@
       "type": "DWPreprocessor",
       "title": "EXTRACT CURRENT ACTOR POSE - EVERY FRAME",
       "pos": [
-        880,
+        0,
         3200
       ],
       "size": [
@@ -1075,13 +1061,13 @@
         340
       ],
       "flags": {},
-      "order": 26,
+      "order": 24,
       "mode": 0,
       "inputs": [
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 28
+          "link": 32
         }
       ],
       "outputs": [
@@ -1089,26 +1075,27 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            29
+            33
           ]
         },
         {
           "name": "POSE_KEYPOINT",
           "type": "POSE_KEYPOINT",
           "links": [
-            30
+            34
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "DWPreprocessor"
+        "Node name for S&R": "DWPreprocessor",
+        "second_unit_role": ""
       },
       "widgets_values": [
         "enable",
         "enable",
         "enable",
         864,
-        "yolox_l.onnx",
+        "yolox_l.torchscript.pt",
         "dw-ll_ucoco_384_bs5.torchscript.pt",
         "disable"
       ]
@@ -1118,26 +1105,26 @@
       "type": "SecondUnitPoseFollowGuide",
       "title": "FOLLOW POSE -2D APPROXIMATION / AUTO TAIL PAD",
       "pos": [
-        0,
-        3600
+        440,
+        3200
       ],
       "size": [
         400,
         340
       ],
       "flags": {},
-      "order": 27,
+      "order": 25,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 29
+          "link": 33
         },
         {
           "name": "pose_kps",
           "type": "POSE_KEYPOINT",
-          "link": 30
+          "link": 34
         }
       ],
       "outputs": [
@@ -1145,14 +1132,14 @@
           "name": "pose_guide",
           "type": "IMAGE",
           "links": [
-            26
+            30
           ]
         },
         {
           "name": "source_frame_count",
           "type": "INT",
           "links": [
-            32
+            36
           ]
         },
         {
@@ -1169,7 +1156,8 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "SecondUnitPoseFollowGuide"
+        "Node name for S&R": "SecondUnitPoseFollowGuide",
+        "second_unit_role": "pose_follow"
       },
       "widgets_values": [
         9,
@@ -1187,6 +1175,92 @@
       "type": "ImageFromBatch",
       "title": "REMOVE ONLY TECHNICAL TAIL - KEEP ALL SOURCE FRAMES",
       "pos": [
+        880,
+        3200
+      ],
+      "size": [
+        400,
+        340
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 35
+        },
+        {
+          "name": "length",
+          "type": "INT",
+          "link": 36,
+          "widget": {
+            "name": "length"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            22
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageFromBatch",
+        "second_unit_role": ""
+      },
+      "widgets_values": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 90,
+      "type": "MiniMaxH3MemoryEfficientSageAttentionPatch",
+      "title": "H3 memory-efficient Sage attention",
+      "pos": [
+        0,
+        3600
+      ],
+      "size": [
+        400,
+        340
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 37
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            12,
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MiniMaxH3MemoryEfficientSageAttentionPatch",
+        "second_unit_role": ""
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 91,
+      "type": "ImageScale",
+      "title": "Compact performance reference - full-resolution pose and identity retained",
+      "pos": [
         440,
         3600
       ],
@@ -1201,15 +1275,7 @@
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 31
-        },
-        {
-          "name": "length",
-          "type": "INT",
-          "link": 32,
-          "widget": {
-            "name": "length"
-          }
+          "link": 38
         }
       ],
       "outputs": [
@@ -1217,23 +1283,148 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            16
+            39,
+            41
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "ImageFromBatch"
+        "Node name for S&R": "ImageScale",
+        "second_unit_role": "pose_reference_scale"
       },
       "widgets_values": [
-        0,
+        "area",
+        512,
+        288,
+        "disabled"
+      ]
+    },
+    {
+      "id": 92,
+      "type": "ImageFromBatch",
+      "title": "Last reference frame (clamped to available frames)",
+      "pos": [
+        880,
+        3600
+      ],
+      "size": [
+        400,
+        340
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            40
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageFromBatch",
+        "second_unit_role": ""
+      },
+      "widgets_values": [
+        4095,
         1
       ]
+    },
+    {
+      "id": 93,
+      "type": "RepeatImageBatch",
+      "title": "H3 reference tail reserve - trimmed internally to target length",
+      "pos": [
+        0,
+        4000
+      ],
+      "size": [
+        400,
+        340
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 40
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            42
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RepeatImageBatch",
+        "second_unit_role": ""
+      },
+      "widgets_values": [
+        17
+      ]
+    },
+    {
+      "id": 94,
+      "type": "ImageBatch",
+      "title": "Complete motion reference including final real frames",
+      "pos": [
+        440,
+        4000
+      ],
+      "size": [
+        400,
+        340
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 41
+        },
+        {
+          "name": "image2",
+          "type": "IMAGE",
+          "link": 42
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageBatch",
+        "second_unit_role": ""
+      },
+      "widgets_values": []
     }
   ],
   "links": [
     [
       1,
-      24,
+      17,
       0,
       5,
       0,
@@ -1273,14 +1464,62 @@
     ],
     [
       6,
-      27,
+      7,
+      0,
+      9,
+      4,
+      "IMAGE"
+    ],
+    [
+      7,
+      19,
+      0,
+      9,
+      5,
+      "IMAGE"
+    ],
+    [
+      8,
+      20,
+      0,
+      9,
+      6,
+      "IMAGE"
+    ],
+    [
+      9,
+      21,
+      0,
+      9,
+      7,
+      "IMAGE"
+    ],
+    [
+      10,
+      8,
+      0,
+      9,
+      8,
+      "IMAGE"
+    ],
+    [
+      11,
+      94,
+      0,
+      9,
+      9,
+      "IMAGE"
+    ],
+    [
+      12,
+      90,
       0,
       11,
       0,
       "MODEL"
     ],
     [
-      7,
+      13,
       9,
       0,
       11,
@@ -1288,15 +1527,15 @@
       "CONDITIONING"
     ],
     [
-      8,
-      27,
+      14,
+      90,
       0,
       13,
       0,
       "MODEL"
     ],
     [
-      9,
+      15,
       10,
       0,
       14,
@@ -1304,7 +1543,7 @@
       "NOISE"
     ],
     [
-      10,
+      16,
       11,
       0,
       14,
@@ -1312,7 +1551,7 @@
       "GUIDER"
     ],
     [
-      11,
+      17,
       12,
       0,
       14,
@@ -1320,7 +1559,7 @@
       "SAMPLER"
     ],
     [
-      12,
+      18,
       13,
       0,
       14,
@@ -1328,7 +1567,7 @@
       "SIGMAS"
     ],
     [
-      13,
+      19,
       9,
       1,
       14,
@@ -1336,7 +1575,7 @@
       "LATENT"
     ],
     [
-      14,
+      20,
       14,
       0,
       15,
@@ -1344,7 +1583,7 @@
       "LATENT"
     ],
     [
-      15,
+      21,
       3,
       0,
       15,
@@ -1352,7 +1591,7 @@
       "VAE"
     ],
     [
-      16,
+      22,
       31,
       0,
       16,
@@ -1360,7 +1599,7 @@
       "IMAGE"
     ],
     [
-      17,
+      23,
       18,
       0,
       16,
@@ -1368,7 +1607,7 @@
       "AUDIO"
     ],
     [
-      18,
+      24,
       14,
       0,
       18,
@@ -1376,7 +1615,7 @@
       "LATENT"
     ],
     [
-      19,
+      25,
       4,
       0,
       18,
@@ -1384,7 +1623,7 @@
       "VAE"
     ],
     [
-      20,
+      26,
       1,
       0,
       17,
@@ -1392,23 +1631,7 @@
       "MODEL"
     ],
     [
-      21,
-      17,
-      0,
-      22,
-      0,
-      "MODEL"
-    ],
-    [
-      22,
-      22,
-      0,
-      24,
-      0,
-      "MODEL"
-    ],
-    [
-      23,
+      27,
       5,
       0,
       27,
@@ -1416,7 +1639,7 @@
       "MODEL"
     ],
     [
-      24,
+      28,
       26,
       0,
       27,
@@ -1424,7 +1647,7 @@
       "MODEL_PATCH"
     ],
     [
-      25,
+      29,
       3,
       0,
       27,
@@ -1432,7 +1655,7 @@
       "VAE"
     ],
     [
-      26,
+      30,
       30,
       0,
       27,
@@ -1440,7 +1663,7 @@
       "IMAGE"
     ],
     [
-      27,
+      31,
       28,
       0,
       32,
@@ -1448,7 +1671,7 @@
       "IMAGE"
     ],
     [
-      28,
+      32,
       32,
       0,
       29,
@@ -1456,7 +1679,7 @@
       "IMAGE"
     ],
     [
-      29,
+      33,
       29,
       0,
       30,
@@ -1464,7 +1687,7 @@
       "IMAGE"
     ],
     [
-      30,
+      34,
       29,
       1,
       30,
@@ -1472,7 +1695,7 @@
       "POSE_KEYPOINT"
     ],
     [
-      31,
+      35,
       15,
       0,
       31,
@@ -1480,12 +1703,60 @@
       "IMAGE"
     ],
     [
-      32,
+      36,
       30,
       1,
       31,
       1,
       "INT"
+    ],
+    [
+      37,
+      27,
+      0,
+      90,
+      0,
+      "MODEL"
+    ],
+    [
+      38,
+      32,
+      0,
+      91,
+      0,
+      "IMAGE"
+    ],
+    [
+      39,
+      91,
+      0,
+      92,
+      0,
+      "IMAGE"
+    ],
+    [
+      40,
+      92,
+      0,
+      93,
+      0,
+      "IMAGE"
+    ],
+    [
+      41,
+      91,
+      0,
+      94,
+      0,
+      "IMAGE"
+    ],
+    [
+      42,
+      93,
+      0,
+      94,
+      1,
+      "IMAGE"
     ]
   ],
   "groups": [],

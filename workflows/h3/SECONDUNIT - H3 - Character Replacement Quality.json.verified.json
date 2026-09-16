@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Character Replacement Quality.json",
+  "graph_sha256": "b0cc9962fbbbe34edf220936b0773c45344c64fda28ae8c8863f3a29f5ffc65a",
+  "verified_at": "2026-09-13T20:07:30.008263+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 12,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Character Replacement Quality",
+  "category": "Character replacement",
+  "validation_status": "schema-only",
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet.",
+  "release_eligible": false,
+  "legacy_name": "h3_swap_quality_character-replace.json",
+  "production_ready": true
+}

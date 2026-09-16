@@ -1,0 +1,224 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "MiniMax H3 DiT (fp8 scaled, pruned)"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Qwen3-VL 32B text/vision encoder"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "H3 video VAE"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "_meta": {
+      "title": "H3 audio VAE"
+    }
+  },
+  "5": {
+    "class_type": "VHS_LoadVideo",
+    "inputs": {
+      "video": "input_video.mp4",
+      "force_rate": 24,
+      "custom_width": 960,
+      "custom_height": 544,
+      "frame_load_cap": 141,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "None"
+    },
+    "_meta": {
+      "title": "Source performance (Video 1)"
+    }
+  },
+  "6": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": ""
+    },
+    "_meta": {
+      "title": "ENVIRONMENT BEAUTY - PICTURE 1"
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": ""
+    },
+    "_meta": {
+      "title": "ACTOR IDENTITY - PICTURE 2"
+    }
+  },
+  "8": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": ""
+    },
+    "_meta": {
+      "title": "WARDROBE - PICTURE 3"
+    }
+  },
+  "9": {
+    "class_type": "MiniMaxH3ReferenceToVideo",
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "prompt": "",
+      "width": 1344,
+      "height": 768,
+      "length": 141,
+      "ref_image_size": "match",
+      "ref_images.ref_image_0": [
+        "6",
+        0
+      ],
+      "ref_images.ref_image_1": [
+        "7",
+        0
+      ],
+      "ref_images.ref_image_2": [
+        "8",
+        0
+      ],
+      "ref_videos.ref_video_0": [
+        "5",
+        0
+      ],
+      "ref_video_audios.ref_video_audio_0": [
+        "5",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "Re-photograph <Video 1> inside <Picture 1>"
+    }
+  },
+  "10": {
+    "class_type": "MiniMaxH3SigmaShift",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "shift_video": 12.0,
+      "shift_audio": 3.0
+    },
+    "_meta": {
+      "title": "Sigma shift 12/3 (model default)"
+    }
+  },
+  "11": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "cfg 1 - negative is zeroed"
+    }
+  },
+  "12": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "10",
+        0
+      ],
+      "seed": 811211,
+      "steps": 12,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+        "9",
+        0
+      ],
+      "negative": [
+        "11",
+        0
+      ],
+      "latent_image": [
+        "9",
+        1
+      ],
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "Sample (12 steps, base model)"
+    }
+  },
+  "13": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "12",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode video"
+    }
+  },
+  "14": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": [
+        "13",
+        0
+      ],
+      "audio": [
+        "5",
+        2
+      ],
+      "frame_rate": 24.0,
+      "loop_count": 0,
+      "filename_prefix": "CMD/SecondUnit/h3_environment-swap_fast",
+      "format": "video/ProRes",
+      "profile": "hq",
+      "pingpong": false,
+      "save_output": true
+    },
+    "_meta": {
+      "title": "PRORES HQ"
+    }
+  }
+}

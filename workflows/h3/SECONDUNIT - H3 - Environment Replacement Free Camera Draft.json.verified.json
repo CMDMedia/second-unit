@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Environment Replacement Free Camera Draft.json",
+  "graph_sha256": "6b79b54c9540a813b5e6aae95f09be4de79d64373d580f4b862742e768e9322c",
+  "verified_at": "2026-09-13T20:07:29.951080+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 20,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "production_ready": true,
+  "display_name": "SECONDUNIT - H3 - Environment Replacement Free Camera Draft",
+  "category": "Environment replacement",
+  "validation_status": "quarantined",
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet.",
+  "release_eligible": false,
+  "legacy_name": "h3_environment-swap_draft_turbo8step_world-relocation-previz.json"
+}

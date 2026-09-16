@@ -52,7 +52,7 @@ elseif (-not $Config['comfy_url']) { $Config['comfy_url'] = 'http://127.0.0.1:81
 $Config['workflows_dir'] = Join-Path $Package 'workflows'
 $Config['cache_dir'] = $Cache
 $Config['own_loop'] = '1'
-$Config['show_unproven'] = '0'
+if (-not $Config.ContainsKey('show_unproven')) { $Config['show_unproven'] = '0' }
 $HomeData = @{ repo=$Package; workflows=(Join-Path $Package 'workflows'); python=$Python; cache=$Cache }
 $Utf8 = New-Object System.Text.UTF8Encoding($false)
 try {

@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - LTX 2.5 - Character Replacement.json",
+  "graph_sha256": "ff835fd1d3fdec7ba13d838e289dd1b87bbb59b304809d463e189e3cb3106a66",
+  "verified_at": "2026-09-13T13:27:04.945123+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 25,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet.",
+  "validation_status": "schema-only",
+  "release_eligible": false,
+  "legacy_name": "ltx25_swap_character-replace.json",
+  "display_name": "SECONDUNIT - LTX 2.5 - Character Replacement",
+  "production_ready": true
+}

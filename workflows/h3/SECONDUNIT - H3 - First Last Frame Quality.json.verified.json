@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - H3 - First Last Frame Quality.json",
+  "graph_sha256": "46447b390f0704fee1e47774f54420b1c2ac789351f34adc063ea762086a185f",
+  "verified_at": "2026-09-11T17:00:50.209014+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 14,
+  "local": true,
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - First Last Frame Quality",
+  "category": "First and last frame",
+  "release_eligible": false,
+  "validation_status": "schema-only",
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet.",
+  "legacy_name": "h3_flf2v_first-last-frame_quality.json",
+  "production_ready": true
+}

@@ -1,12 +1,12 @@
 {
   "1": {
     "inputs": {
-      "unet_name": "minimax_h3_ref2va_pruned_bf16.safetensors",
+      "unet_name": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
       "weight_dtype": "default"
     },
     "class_type": "UNETLoader",
     "_meta": {
-      "title": "H3 REF2VA - BF16 BASE"
+      "title": "H3 REF2VA INT8 - compact model"
     }
   },
   "2": {
@@ -43,7 +43,7 @@
       "shift_video": 12,
       "shift_audio": 3,
       "model": [
-        "24",
+        "17",
         0
       ]
     },
@@ -64,7 +64,7 @@
   },
   "9": {
     "inputs": {
-      "prompt": "camera motion. r34l1sm. Use the four actor reference cards for one consistent person and the environment reference for the destination. Preserve the source performance and cautious gait. Continuous follow shot without cuts. Natural photographic skin, wardrobe and lighting.",
+      "prompt": "subject_definitions:\n<Subject 1> is the performer of <Video 1> and the same person shown in <Picture 1>, <Picture 2>, <Picture 3>: every one of these pictures shows this one person and they are fused as complementary evidence of one identity. He keeps a complete body exactly where the footage places it.\n<Subject 2> is the costume shown in <Picture 4>: the garments exactly as pictured, their tailoring, layering, colour, weave, wear and fastenings.\n<Subject 3> is the location shown in <Picture 5>: its geometry, props and materials. Replace the studio with the limestone cave in the environment reference.\n<Video 1> is the performance and timing reference for a shot with the newly requested camera.\n\nsummary:\n[reference generation + video editing] The target video is an edited version of <Video 1>. <Subject 1> wearing <Subject 2> performs exactly as in <Video 1>, at the same timing, seen from the requested camera angle, relocated into <Subject 3>. Replace the studio with the limestone cave in the environment reference. Preserve the same performer, dark quilted jacket, blue jeans, shoes and all source movements and head turns at their original times. One continuous full-body rear three-quarter following shot; keep both feet visible. The target video is one single continuous shot from its first frame to its last frame.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_preserved - the performer's identity, face, skin, build, pose sequence, gesture timing, head turns, eye-line, expression timing and mouth movement are retained; the pictures' framing, head size, angle and lighting are left behind.\n<Subject 2> (appears in [Shot 1]): attribute_transfer - the costume is transferred onto <Subject 1> for the whole shot, fitted to the target performer's proportions; the costume pictures' faces, body proportions, shoulder width, torso bulk, poses, framing and lighting are left behind.\n<Subject 3> (appears in [Shot 1]): fully_preserved - the location's geometry, props and materials are retained; its lighting is the lighting described below.\n<Video 1> (performance: pose sequence, body language, gesture timing, head turns, eye-line, expression timing, mouth movement): fully_preserved - reproduced from the source performance.\n<Video 1> (framing and camera): weak_reference - the source camera position, framing and shot scale are left behind; the shot is re-staged from the camera described below, with the timing and performance kept.\n<Video 1> (action timing): fully_preserved - each footfall, head turn, gesture and change of body orientation occurs at its original source timestamp and speed. The recorded acting remains the motion authority when the camera moves.\n<Video 1> (environment): weak_reference - the source location is replaced by <Subject 3>.\n<Video 1> (shot structure and pacing): weak_reference - the target video is one single continuous take, a single uninterrupted run of the camera from the first frame to the last frame; whatever the source contains, the target is one shot.\n\ndetailed_description:\nThe target video is live-action, cinematic, photographed on a large-format digital cinema camera with a shallow depth of field, a single continuous take.\n[Shot 1] The requested camera angle and composition frame <Subject 1> wearing <Subject 2>. Replace the studio with the limestone cave in the environment reference. Preserve the same performer, dark quilted jacket, blue jeans, shoes and all source movements and head turns at their original times. One continuous full-body rear three-quarter following shot; keep both feet visible. The take runs unbroken from the first frame to the last frame.\n\noverall_soundscape:\nQuiet room tone continues throughout, with the soft physical sounds of the subject's movement.\n\nnon_diegetic_music:\nN/A",
       "width": 1536,
       "height": 864,
       "length": [
@@ -105,7 +105,7 @@
         0
       ],
       "ref_videos.ref_video_0": [
-        "32",
+        "91",
         0
       ]
     },
@@ -127,7 +127,7 @@
   "11": {
     "inputs": {
       "model": [
-        "27",
+        "90",
         0
       ],
       "conditioning": [
@@ -155,7 +155,7 @@
       "steps": 4,
       "denoise": 1,
       "model": [
-        "27",
+        "90",
         0
       ]
     },
@@ -213,7 +213,7 @@
       "frame_rate": 24,
       "loop_count": 0,
       "filename_prefix": "SecondUnit/Tests/Pose-Follow/H3-Cave-Pose-Follow-SingleGraph",
-      "format": "video/h264-mp4",
+      "format": "video/ProRes",
       "save_metadata": true,
       "trim_to_audio": false,
       "pingpong": false,
@@ -227,7 +227,7 @@
         0
       ],
       "pix_fmt": "yuv420p",
-      "crf": 18
+      "profile": "hq"
     },
     "class_type": "VHS_VideoCombine",
     "_meta": {
@@ -305,34 +305,6 @@
       "second_unit_role": "pose_identity_body"
     }
   },
-  "22": {
-    "class_type": "LoraLoaderModelOnly",
-    "inputs": {
-      "model": [
-        "17",
-        0
-      ],
-      "lora_name": "h3-realism-people-t2v-i2v-r2v.safetensors",
-      "strength_model": 0.6
-    },
-    "_meta": {
-      "title": "H3 REALISM PEOPLE - LIGHT 0.6"
-    }
-  },
-  "24": {
-    "class_type": "LoraLoaderModelOnly",
-    "inputs": {
-      "model": [
-        "22",
-        0
-      ],
-      "lora_name": "MiniMax-H3\\camera_motion_h3_lora_v1_3000_pruned.safetensors",
-      "strength_model": 0.4
-    },
-    "_meta": {
-      "title": "CAMERA MOTION0.4 - PRIORITIZE POSE"
-    }
-  },
   "26": {
     "class_type": "ModelPatchLoader",
     "inputs": {
@@ -357,16 +329,16 @@
         "3",
         0
       ],
-      "strength": 0.35,
+      "strength": 0.6,
       "start_percent": 0.0,
-      "end_percent": 0.6,
+      "end_percent": 1.0,
       "control_video": [
         "30",
         0
       ]
     },
     "_meta": {
-      "title": "ACTUAL FRAMEWISE POSE CONTROL1.0 - FULL SCHEDULE"
+      "title": "POSE CONTROL 0.6 - full schedule"
     }
   },
   "28": {
@@ -414,7 +386,7 @@
       "detect_body": "enable",
       "detect_face": "enable",
       "resolution": 864,
-      "bbox_detector": "yolox_l.onnx",
+      "bbox_detector": "yolox_l.torchscript.pt",
       "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
       "scale_stick_for_xinsr_cn": "disable"
     },
@@ -462,6 +434,35 @@
     },
     "_meta": {
       "title": "REMOVE ONLY TECHNICAL TAIL - KEEP ALL SOURCE FRAMES"
+    }
+  },
+  "90": {
+    "class_type": "MiniMaxH3MemoryEfficientSageAttentionPatch",
+    "inputs": {
+      "model": [
+        "27",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "H3 memory-efficient Sage attention"
+    }
+  },
+  "91": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "32",
+        0
+      ],
+      "upscale_method": "area",
+      "width": 512,
+      "height": 288,
+      "crop": "disabled"
+    },
+    "_meta": {
+      "title": "Compact performance reference - full-resolution pose and identity retained",
+      "second_unit_role": "pose_reference_scale"
     }
   }
 }

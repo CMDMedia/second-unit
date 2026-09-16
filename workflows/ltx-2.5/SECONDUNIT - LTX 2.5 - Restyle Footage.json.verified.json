@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - LTX 2.5 - Restyle Footage.json",
+  "graph_sha256": "f4ad070abfdad5c65e3c96e605c925fb778abd87d8a1a6474901029e61c68653",
+  "verified_at": "2026-09-13T22:56:45.651309+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 21,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "production_ready": true,
+  "validation_status": "render-proven",
+  "visual_review": "Reviewed render: restyle lane; on shots with a person it may replace them, use it for environment-only footage.",
+  "release_eligible": true,
+  "display_name": "SECONDUNIT - LTX 2.5 - Restyle Footage",
+  "legacy_name": "ltx25_v2v_restyle.json"
+}

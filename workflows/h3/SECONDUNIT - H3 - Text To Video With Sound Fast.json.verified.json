@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - H3 - Text To Video With Sound Fast.json",
+  "graph_sha256": "bbe93a23cf46eb4fc476d862627473b3a7c3a19c8c9df25a0e3a3aca72c78e09",
+  "verified_at": "2026-09-11T17:00:50.291157+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 15,
+  "local": true,
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Text To Video With Sound Fast",
+  "category": "Text generation",
+  "release_eligible": true,
+  "validation_status": "render-proven",
+  "visual_review": "Reviewed render: photoreal scene and sound from the prompt alone.",
+  "legacy_name": "h3_t2v_fast_text-to-video-with-sound.json",
+  "production_ready": true
+}

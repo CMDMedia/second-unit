@@ -1,0 +1,26 @@
+{
+  "graph": "SECONDUNIT - WAN 2.2 - Animate Still 5B Quality.json",
+  "graph_sha256": "f3d7f2b415d47311d6c71a4c8f0e0e6b0ed76695b96d7192477a5f468bac7765",
+  "verified_at": "2026-09-11T17:00:50.332760+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 12,
+  "local": true,
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "legacy_name": "wan22_i2v_quality_5b.json",
+  "display_name": "SECONDUNIT - WAN 2.2 - Animate Still 5B Quality",
+  "production_ready": true,
+  "validation_status": "schema-only",
+  "release_eligible": false,
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet."
+}

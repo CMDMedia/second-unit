@@ -402,6 +402,8 @@ MAX_SECONDS = 30.0
 
 
 WORLD_WINDOW_MAX_SECONDS = 10.0
+STILL_SOURCE_MODES = ("I2V", "FLF2V", "STILLS", "STORYBOARD")
+LOOP_DEGRADE_STREAK = 3
 WORLD_WINDOW_OVERLAP_SECONDS = 1.0
 
 try:
@@ -458,14 +460,29 @@ RUN_ESTIMATE_S = _env_float("SECOND_UNIT_RUN_ESTIMATE", 180)
 MODES = ("T2V", "I2V", "FLF2V", "V2V", "ENVSWAP", "SWAP", "ANGLE", "SEGMENT", "STORYBOARD", "STILLS")
 LANES = ("Distilled", "Quality")
 FAMILIES = ("LTX25", "LTX23", "MINIMAXH3", "WAN22", "SAM31", "JUGGERNAUTQWEN", "JUGGERNAUT")
-H3_ENVSWAP_MASTER_NAME = "h3_environment-swap_lock_master_world-relocation.json"
+H3_ENVSWAP_MASTER_NAME = "SECONDUNIT - H3 - Environment Replacement Depth Locked Master.json"
+H3_ENVSWAP_MASTER_LEGACY_NAME = "h3_environment-swap_lock_master_world-relocation.json"
 
 DEFAULT_PRESETS = {
     ("JUGGERNAUT", "STILLS", "Quality"): "SecondUnit-Juggernaut-Environment-Stills-API.json",
     ("JUGGERNAUTQWEN", "STORYBOARD", "Quality"): "SecondUnit-Environment-Storyboard-Quality-API.json",
-    ("MINIMAXH3", "ENVSWAP", "Distilled"): "h3_environment-swap_depthlock_fast_world-relocation.json",
-    ("MINIMAXH3", "ENVSWAP", "Quality"): "h3_environment-swap_depthlock_quality_world-relocation.json",
-    ("MINIMAXH3", "V2V", "Distilled"): "h3_v2v_draft_turbo4step_reference-video-with-sound.json",
+    ("MINIMAXH3", "ENVSWAP", "Distilled"): "SECONDUNIT - H3 - Environment Replacement Depth Locked Fast.json",
+    ("MINIMAXH3", "ENVSWAP", "Quality"): "SECONDUNIT - H3 - Environment Replacement Depth Locked Quality.json",
+    ("MINIMAXH3", "V2V", "Distilled"): "SECONDUNIT - H3 - Restyle Footage With Sound Fast.json",
+    ("MINIMAXH3", "V2V", "Quality"): "SECONDUNIT - H3 - Restyle Footage With Sound Quality.json",
+    ("MINIMAXH3", "SWAP", "Distilled"): "SECONDUNIT - H3 - Character Replacement Depth Locked Fast.json",
+    ("MINIMAXH3", "SWAP", "Quality"): "SECONDUNIT - H3 - Character Replacement Depth Locked Quality.json",
+    ("MINIMAXH3", "I2V", "Distilled"): "SECONDUNIT - H3 - Animate Still With Sound Fast.json",
+    ("MINIMAXH3", "I2V", "Quality"): "SECONDUNIT - H3 - Animate Still With Sound Quality.json",
+    ("MINIMAXH3", "FLF2V", "Distilled"): "SECONDUNIT - H3 - First Last Frame Fast.json",
+    ("MINIMAXH3", "FLF2V", "Quality"): "SECONDUNIT - H3 - First Last Frame Quality.json",
+    ("MINIMAXH3", "ANGLE", "Distilled"): "SECONDUNIT - H3 - Second Angle Fast.json",
+    ("MINIMAXH3", "ANGLE", "Quality"): "SECONDUNIT - H3 - Second Angle Quality.json",
+    ("MINIMAXH3", "T2V", "Distilled"): "SECONDUNIT - H3 - Text To Video With Sound Fast.json",
+    ("LTX25", "I2V", "Distilled"): "SECONDUNIT - LTX 2.5 - Animate Still With Audio Fast.json",
+    ("LTX25", "T2V", "Distilled"): "SECONDUNIT - LTX 2.5 - Text To Video With Audio.json",
+    ("LTX25", "SWAP", "Distilled"): "SECONDUNIT - LTX 2.5 - Character Replacement.json",
+    ("LTX25", "V2V", "Distilled"): "SECONDUNIT - LTX 2.5 - Restyle Footage.json",
 }
 
 LEGACY_NAME_MAP_FOR_SELFTEST = {
@@ -1162,10 +1179,23 @@ def parse_seed(text):
     raw = (text or "").strip()
     if not raw or raw == "-1":
         return None
+    if raw.lower() in ("r", "rand", "random"):
+        value = random_seed()
+        log("seed: %s requested -> random seed %d" % (raw, value))
+        return value
     try:
-        return int(raw)
+        value = int(raw)
     except ValueError:
-        raise SecondUnitError("Seed %r is not an integer. Leave it blank to keep the graph's seed." % (raw,))
+        raise SecondUnitError("Seed %r is not an integer. Leave it blank (or -1) to keep the graph's seed, "
+                              "type a whole number to pin it, or 'random' for a fresh seed." % (raw,))
+    if value < 0:
+        value = random_seed()
+        log("seed: %s requested -> random seed %d (ComfyUI samplers need 0 or above)" % (raw, value))
+    return value
+
+
+def random_seed():
+    return int(uuid.uuid4().int % (2 ** 32))
 
 
 def name_tokens(name):
@@ -2242,7 +2272,7 @@ def h3_first_frame_anchor_arm(entry, graph):
         return value
     if value:
         raise SecondUnitError("SECOND_UNIT_H3_FIRST_FRAME_ANCHOR must be off, picture or latent (got %r)." % value)
-    return H3_FIRST_FRAME_DEFAULT_MASTER if entry.name == H3_ENVSWAP_MASTER_NAME else "off"
+    return H3_FIRST_FRAME_DEFAULT_MASTER if entry.name in (H3_ENVSWAP_MASTER_NAME, H3_ENVSWAP_MASTER_LEGACY_NAME) else "off"
 
 
 def h3_reference_node(graph):
@@ -4563,8 +4593,32 @@ def patch_pose_follow_graph(graph, prompt, seconds, seed, source, environment, c
         node["inputs"][key] = value
     h3=roles["pose_h3"][1]
     if not str(prompt or "").strip():raise SecondUnitError("Describe the continuous follow shot before generating.")
-    h3["inputs"]["prompt"] = "camera motion\n" + compose_h3_prompt(prompt, patched)
+    camera_lora = any("camera_motion" in str((n.get("inputs") or {}).get("lora_name", "")).lower()
+                      for n in patched.values())
+    h3["inputs"]["prompt"] = ("camera motion\n" if camera_lora else "") + compose_h3_prompt(prompt, patched)
     fps=graph_fps(patched);frames=max(1,int(round(float(seconds)*fps)))
+    generated_frames = snap_frames(frames, "MiniMaxH3ReferenceToVideo")
+    # H3 rounds a reference video DOWN to 17k+5. Pad only its tail so
+    # the final real performance frames reach the model (83 -> 90, not 73).
+    # This preserves reference coverage; it is not a fix for guide leakage.
+    tail_padding = generated_frames - frames
+    if tail_padding:
+        for key, reference in list(h3["inputs"].items()):
+            if not key.startswith("ref_videos.") or not is_link(reference):
+                continue
+            last_id = _new_graph_node_id(patched)
+            patched[last_id] = {"class_type": "ImageFromBatch", "inputs": {
+                "image": list(reference), "batch_index": frames - 1, "length": 1},
+                "_meta": {"title": "Last real source frame"}}
+            repeat_id = _new_graph_node_id(patched)
+            patched[repeat_id] = {"class_type": "RepeatImageBatch", "inputs": {
+                "image": [last_id, 0], "amount": tail_padding},
+                "_meta": {"title": "Technical reference tail only"}}
+            padded_id = _new_graph_node_id(patched)
+            patched[padded_id] = {"class_type": "ImageBatch", "inputs": {
+                "image1": list(reference), "image2": [repeat_id, 0]},
+                "_meta": {"title": "Complete source reference on H3 frame grid"}}
+            h3["inputs"][key] = [padded_id, 0]
     for node in patched.values():
         inputs=node.get("inputs") or {}
         if node.get("class_type")=="RandomNoise" and seed is not None:inputs["noise_seed"]=int(seed)
@@ -4580,7 +4634,7 @@ def patch_pose_follow_graph(graph, prompt, seconds, seed, source, environment, c
                     if v==old:item["inputs"][k]=new
             del patched[key]
     enforce_lane_prefix(patched,"ENVSWAP")
-    return patched,{"fps":fps,"frames":frames,"generated_frames":snap_frames(frames,"MiniMaxH3ReferenceToVideo"),
+    return patched,{"fps":fps,"frames":frames,"generated_frames":generated_frames,"reference_tail_padding":tail_padding,
                     "seconds":float(seconds),"output_size":(1536,864),"final_output_size":(1536,864),
                     "native_intermediate":True,"pose_follow":True,"source_targets":[(roles["pose_source"][0],"file" if roles["pose_source"][1]["class_type"]=="LoadVideo" else "video")],
                     "frame_targets":[],"delivery_trim_targets":[],"prefix_changes":[],"prores_nodes":[],
@@ -7682,6 +7736,8 @@ class GenerateJob(threading.Thread):
     def _run(self):
         if self.params.get("entry") and self.params["entry"].stamp.get("pipeline") == "h3_pose_follow":
             self.params.update(detail_upscale=False, auto_cards=False, source_format="VIDEO")
+        if self.params.get("detail_upscale") and not self.params.get("window_internal")                 and not self.params.get("_first_frame_prepass"):
+            detail_upscale_entry()
         if self.params.get("mode") == "STILLS":
             return self.run_environment_still()
         if self.params.get("mode") == "STORYBOARD":
@@ -7804,7 +7860,7 @@ class GenerateJob(threading.Thread):
                     self.post("status", text="PNG sequence unavailable (%s); using the video proxy." % exc,
                               state="CHECKING", progress=6)
                     source_frames = None
-            elif sequence_source_dir(params["source_path"]):
+            elif params.get("mode") not in STILL_SOURCE_MODES and sequence_source_dir(params["source_path"]):
                 raise SecondUnitError(
                     "%s is a folder of frames. Set the source format to PNG sequence (V2V) to use it."
                     % params["source_path"])
@@ -10091,7 +10147,11 @@ class SecondUnitPanel(object):
         return self.timer_alive()
 
     def refresh_hint(self):
-        return "" if self.live_updates() else "Live updates are OFF on this Resolve build: press REFRESH to see progress and land a finished clip."
+        if self.live_updates():
+            return ""
+        if getattr(self, "_own_loop_active", False):
+            return "Updates continue by themselves; they may arrive late while Resolve is busy."
+        return "Live updates are OFF on this Resolve build: press REFRESH to see progress and land a finished clip."
 
     def check_build_on_disk(self, force=False):
         now = time.monotonic()
@@ -10218,7 +10278,7 @@ class SecondUnitPanel(object):
             ("browse5", "Clicked", self.on_browse5),
             ("browse6", "Clicked", self.on_browse6),
             ("usetimeline", "Clicked", self.on_use_timeline),
-            ("family", "CurrentIndexChanged", self.on_mode_changed),
+            ("family", "CurrentIndexChanged", self.on_family_changed),
             ("resolution", "CurrentIndexChanged", self.on_selection_changed),
             ("detail_upscale", "Clicked", self.on_selection_changed),
             ("mode", "CurrentIndexChanged", self.on_mode_changed),
@@ -10331,6 +10391,28 @@ class SecondUnitPanel(object):
             return None
         return ("1080P on MiniMax H3 needs RTX Video Super Resolution on the generation lane, and ComfyUI at %s does not "
                 "have that node. Tick DETAIL (LTX 2.5 x2) for a real 1080P, or choose 720P." % comfy_short_target(COMFY_URL))
+
+    def on_family_changed(self, event=None):
+        # A model choice is authoritative. Do not let the previous Stills mode
+        # immediately reset it to Juggernaut through on_mode_changed.
+        family = self.current_family()
+        choices = []
+        modes = [self.current_mode()] + [key for key, _ in MODE_LABELS
+                                        if key != self.current_mode()]
+        lanes = [self.current_lane()] + [key for key, _ in LANE_LABELS
+                                        if key != self.current_lane()]
+        for mode in modes:
+            for lane in lanes:
+                if candidates_for(self.entries, mode, lane,
+                                  self.get_checked("allow_cloud"), family,
+                                  show_unproven=self.show_unproven()):
+                    choices.append((mode, lane))
+        if choices:
+            mode, lane = choices[0]
+            self.set_attr("mode", "CurrentIndex", [k for k, _ in MODE_LABELS].index(mode))
+            self.set_attr("lane", "CurrentIndex", [k for k, _ in LANE_LABELS].index(lane))
+        self.repopulate_presets()
+        self.on_selection_changed(event)
 
     def on_mode_changed(self, event=None):
         if self.current_mode() in ("STORYBOARD", "STILLS"):
@@ -10637,14 +10719,20 @@ class SecondUnitPanel(object):
             watch["ms_sum"] += dt * 1000.0
             watch["count"] += 1
             if dt > 1.0:
-                first_slow = not getattr(self, "_loop_degraded", None)
-                self._loop_degraded = "GetEvent(False) took %.1fs" % dt
                 self._last_slow_at = clock()
+                slow_streak = getattr(self, "_slow_streak", 0) + 1
+                self._slow_streak = slow_streak
                 if watch["slow_logged_at"] is None or clock() - watch["slow_logged_at"] >= 60:
                     watch["slow_logged_at"] = clock()
-                    log("LOOP: GetEvent(False) slow %.0f ms - live updates degraded" % (dt * 1000.0))
-                if first_slow:
-                    self.status("Live updates are lagging on this Resolve build (one event check took %.1f s). %s" % (dt, self.refresh_hint()), severity="warn")
+                    log("LOOP: GetEvent(False) slow %.0f ms (streak %d) - Resolve was busy; the loop keeps running"
+                        % (dt * 1000.0, slow_streak))
+                if slow_streak >= LOOP_DEGRADE_STREAK and not getattr(self, "_loop_degraded", None):
+                    self._loop_degraded = "GetEvent(False) took %.1fs, %d times in a row" % (dt, slow_streak)
+                    self.status("Resolve is busy (%d slow event checks in a row, last %.1f s). Updates continue by "
+                                "themselves; they may arrive late until Resolve frees up." % (slow_streak, dt),
+                                severity="warn")
+            else:
+                self._slow_streak = 0
             return got
 
         log("LOOP: own loop (GetEvent(False)+Dispatch), pump every %d ms, sleep %d ms" % (TIMER_INTERVAL_MS, int(round(OWN_LOOP_SLEEP_S * 1000))))
@@ -10701,8 +10789,9 @@ class SecondUnitPanel(object):
                         ev = None
                 if data.get("done"): break
                 now = clock()
-                if getattr(self, "_loop_degraded", None) and now - getattr(self, "_last_slow_at", now) > 60:
+                if getattr(self, "_loop_degraded", None) and now - getattr(self, "_last_slow_at", now) > 15:
                     self._loop_degraded = None
+                    self._slow_streak = 0
                     log("LOOP: degraded cleared")
                 if now - last_pump >= interval:
                     if last_tick_at is not None:

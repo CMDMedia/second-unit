@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Environment Replacement Depth Locked Master.json",
+  "graph_sha256": "4a4cfdfa24970fc8fd96408f56902df9ee2d37f8056b251661b02e8b8bedadf2",
+  "verified_at": "2026-09-14T19:34:48.446308+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 23,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Environment Replacement Depth Locked Master",
+  "category": "Environment replacement",
+  "visual_review": "Reviewed render: highest-step depth-locked relocation lane.",
+  "validation_status": "render-proven",
+  "release_eligible": true,
+  "production_ready": true,
+  "legacy_name": "h3_environment-swap_lock_master_world-relocation.json"
+}

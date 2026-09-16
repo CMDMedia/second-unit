@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Environment Replacement Depth Locked Fast.json",
+  "graph_sha256": "1a3703f44d78f3a1000d9b6651679bd9689ff71ca83cb33d20886b5c06037ff8",
+  "verified_at": "2026-09-13T20:07:29.920001+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 24,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Environment Replacement Depth Locked Fast",
+  "category": "Environment replacement",
+  "validation_status": "render-proven",
+  "visual_review": "Reviewed render: relocation into the environment picture with locked framing when the prompt describes the environment; a bare template prompt keeps the source location.",
+  "release_eligible": true,
+  "legacy_name": "h3_environment-swap_depthlock_fast_world-relocation.json",
+  "production_ready": true
+}

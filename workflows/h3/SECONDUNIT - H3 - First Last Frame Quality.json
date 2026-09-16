@@ -1,0 +1,207 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "minimax_h3_fl2va_pruned_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "MiniMax H3 FL2VA pruned FP8 scaled"
+    },
+    "class_type": "UNETLoader"
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "MiniMax H3 Qwen3-VL Encoder"
+    },
+    "class_type": "CLIPLoader"
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "MiniMax H3 Video VAE"
+    },
+    "class_type": "VAELoader"
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "_meta": {
+      "title": "MiniMax H3 Audio VAE"
+    },
+    "class_type": "VAELoader"
+  },
+  "5": {
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "shift_video": 12,
+      "shift_audio": 3
+    },
+    "_meta": {
+      "title": "MiniMax H3 Sigma Shift"
+    },
+    "class_type": "MiniMaxH3SigmaShift"
+  },
+  "6": {
+    "inputs": {
+      "image": "first_frame.png"
+    },
+    "_meta": {
+      "title": "FIRST FRAME - replace this"
+    },
+    "class_type": "LoadImage"
+  },
+  "7": {
+    "inputs": {
+      "image": "last_frame.png"
+    },
+    "_meta": {
+      "title": "LAST FRAME - replace this"
+    },
+    "class_type": "LoadImage"
+  },
+  "8": {
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "prompt": "Travel smoothly from the opening frame to the closing frame as one continuous take. Interpolate the subject's pose, the camera move, and the lighting change with believable physical timing and constant velocity - no snapping, no rewinding, no hold at either end. Photoreal, filmic depth of field, natural motion blur, consistent film grain. Ambient production sound matched to the scene. No warping, no flicker, no identity drift, no cuts, no text or watermarks.",
+      "width": 1888,
+      "height": 1056,
+      "length": 56,
+      "first_frame": [
+        "6",
+        0
+      ],
+      "last_frame": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "MiniMax H3 FL2VA - first + last frame"
+    },
+    "class_type": "MiniMaxH3ImageToVideo"
+  },
+  "9": {
+    "inputs": {
+      "conditioning": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Negative conditioning (zeroed, cfg 1)"
+    },
+    "class_type": "ConditioningZeroOut"
+  },
+  "10": {
+    "inputs": {
+      "model": [
+        "5",
+        0
+      ],
+      "seed": 811208,
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "9",
+        0
+      ],
+      "latent_image": [
+        "8",
+        1
+      ],
+      "denoise": 1
+    },
+    "_meta": {
+      "title": "FL2VA Sampler (joint AV latent)"
+    },
+    "class_type": "KSampler"
+  },
+  "11": {
+    "inputs": {
+      "samples": [
+        "10",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode Video"
+    },
+    "class_type": "VAEDecode"
+  },
+  "12": {
+    "inputs": {
+      "samples": [
+        "10",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode Audio - omit this and the render is silent"
+    },
+    "class_type": "VAEDecodeAudio"
+  },
+  "13": {
+    "inputs": {
+      "images": [
+        "11",
+        0
+      ],
+      "fps": 24,
+      "audio": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Create Video (generated audio)"
+    },
+    "class_type": "CreateVideo"
+  },
+  "14": {
+    "inputs": {
+      "video": [
+        "13",
+        0
+      ],
+      "filename_prefix": "CMD/SecondUnit/_gpu0_h3_fl2va_fp8_quality",
+      "format": "auto",
+      "codec": "auto"
+    },
+    "_meta": {
+      "title": "SAVE OUTPUT"
+    },
+    "class_type": "SaveVideo"
+  }
+}

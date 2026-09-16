@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - LTX 2.5 - Animate Still Camera Arc Shot Fast.json",
+  "graph_sha256": "09945d8aa793abb4ccbe8ce8f3251c8cc755790bfb5837931a89d8d28085eddd",
+  "verified_at": "2026-09-13T13:27:04.941119+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 23,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "visual_review": "Reviewed render: the still animates with a slow arc, geometry holds.",
+  "validation_status": "render-proven",
+  "release_eligible": true,
+  "legacy_name": "ltx25_i2v_distilled_camera-arcshot.json",
+  "display_name": "SECONDUNIT - LTX 2.5 - Animate Still Camera Arc Shot Fast",
+  "production_ready": true
+}

@@ -1,0 +1,314 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "LTX 2.5 Distilled BF16 cast to Ada FP8"
+    },
+    "inputs": {
+      "unet_name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "LTX 2.5 Text Encoder (local Gemma)"
+    },
+    "inputs": {
+      "clip_name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "type": "ltxv",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "LTX 2.5 Video VAE"
+    },
+    "inputs": {
+      "vae_name": "ltx-2.5-video-vae-conv-bf16.safetensors"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "LTX 2.5 Audio VAE"
+    },
+    "inputs": {
+      "vae_name": "ltx-2.5-audio-vae-bf16.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "FIRST FRAME - replace this (1024x576 preferred)"
+    },
+    "inputs": {
+      "image": "input_image.png"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "POSITIVE PROMPT - replace this"
+    },
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "text": "Start exactly on the provided still and bring it to life without changing the framing or the subject: hold the composition of the input image and let the scene breathe. Slow cinematic dolly push-in on a 50mm lens, gentle parallax, practical light spills across the subject, natural blinks and a subtle weight shift, fabric and surfaces catch soft rolling specular highlights. Photorealistic texture, stable identity, coherent occlusion, natural motion blur, fine film grain, 24fps motion cadence. Audio: quiet room tone, soft ambient movement."
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "NEGATIVE PROMPT"
+    },
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "text": "identity drift, face morphing, changing costume, changing background, camera cut, sudden zoom, cartoon, anime, illustration, 3d render, plastic waxy skin, warped hands, extra fingers, extra limbs, duplicated subject, melting edges, halos, ghosting, double exposure, text, watermark, logo, subtitles, flicker, strobing, crawling texture, frozen static frame, blurry, low resolution, compression artifacts, oversaturated, blown highlights, distorted audio, clipping, hiss"
+    }
+  },
+  "8": {
+    "class_type": "LTXVConditioning",
+    "_meta": {
+      "title": "LTX 2.5 Conditioning @ 24fps"
+    },
+    "inputs": {
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "frame_rate": 24
+    }
+  },
+  "9": {
+    "class_type": "EmptyLTXVLatentVideo",
+    "_meta": {
+      "title": "1024x576 / 121 frames / 5.0s @ 24fps"
+    },
+    "inputs": {
+      "width": 1024,
+      "height": 576,
+      "length": 121,
+      "batch_size": 1
+    }
+  },
+  "10": {
+    "class_type": "LTXVImgToVideoInplace",
+    "_meta": {
+      "title": "FIRST-FRAME CONDITIONING (bypass=false)"
+    },
+    "inputs": {
+      "vae": [
+        "3",
+        0
+      ],
+      "image": [
+        "5",
+        0
+      ],
+      "latent": [
+        "9",
+        0
+      ],
+      "strength": 1.0,
+      "bypass": false
+    }
+  },
+  "11": {
+    "class_type": "LTXVEmptyLatentAudio",
+    "_meta": {
+      "title": "Empty Audio Latent (generated track)"
+    },
+    "inputs": {
+      "frames_number": 121,
+      "frame_rate": 24,
+      "batch_size": 1,
+      "audio_vae": [
+        "4",
+        0
+      ]
+    }
+  },
+  "12": {
+    "class_type": "LTXVConcatAVLatent",
+    "_meta": {
+      "title": "Combine AV Latent"
+    },
+    "inputs": {
+      "video_latent": [
+        "10",
+        0
+      ],
+      "audio_latent": [
+        "11",
+        0
+      ]
+    }
+  },
+  "13": {
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "Seed"
+    },
+    "inputs": {
+      "noise_seed": 457289196
+    }
+  },
+  "14": {
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "Distilled CFG 1.0"
+    },
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "cfg": 1
+    }
+  },
+  "15": {
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "Sampler"
+    },
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    }
+  },
+  "16": {
+    "class_type": "ManualSigmas",
+    "_meta": {
+      "title": "Official 8-step distilled schedule"
+    },
+    "inputs": {
+      "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+    }
+  },
+  "17": {
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "LTX 2.5 I2V Sample"
+    },
+    "inputs": {
+      "noise": [
+        "13",
+        0
+      ],
+      "guider": [
+        "14",
+        0
+      ],
+      "sampler": [
+        "15",
+        0
+      ],
+      "sigmas": [
+        "16",
+        0
+      ],
+      "latent_image": [
+        "12",
+        0
+      ]
+    }
+  },
+  "18": {
+    "class_type": "LTXVSeparateAVLatent",
+    "_meta": {
+      "title": "Separate AV (0=video, 1=audio)"
+    },
+    "inputs": {
+      "av_latent": [
+        "17",
+        0
+      ]
+    }
+  },
+  "19": {
+    "class_type": "VAEDecodeTiled",
+    "_meta": {
+      "title": "Tiled Video Decode"
+    },
+    "inputs": {
+      "samples": [
+        "18",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 128,
+      "temporal_overlap": 32
+    }
+  },
+  "23": {
+    "class_type": "LTXVAudioVAEDecode",
+    "_meta": {
+      "title": "Decode GENERATED audio (still image carries none)"
+    },
+    "inputs": {
+      "samples": [
+        "18",
+        1
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "Mux video + generated audio @ 24fps"
+    },
+    "inputs": {
+      "images": [
+        "19",
+        0
+      ],
+      "audio": [
+        "23",
+        0
+      ],
+      "fps": 24
+    }
+  },
+  "21": {
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "SAVE OUTPUT (GPU1 tagged)"
+    },
+    "inputs": {
+      "video": [
+        "20",
+        0
+      ],
+      "filename_prefix": "CMD/SecondUnit/_gpu1_ltx25_i2v",
+      "format": "auto",
+      "codec": "auto"
+    }
+  }
+}

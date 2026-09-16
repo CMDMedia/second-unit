@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Character Replacement Depth Locked Fast.json",
+  "graph_sha256": "140dd3163ea68e4413999464ddc2b08359d173cd02d79312088d6131b22fb7aa",
+  "verified_at": "2026-09-13T20:07:29.981756+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 23,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Character Replacement Depth Locked Fast",
+  "category": "Character replacement",
+  "validation_status": "render-proven",
+  "visual_review": "Reviewed render: framing locked to the source, identity and wardrobe from the reference pictures held, mouth motion follows the source.",
+  "release_eligible": true,
+  "legacy_name": "h3_swap_lock_fast_character-replace-depth-locked.json",
+  "production_ready": true
+}

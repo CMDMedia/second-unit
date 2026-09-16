@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Character Replacement Draft.json",
+  "graph_sha256": "c4be939914f6da9511aecef0f0726a29b6c6023175bfe2c9657389e4e539527d",
+  "verified_at": "2026-09-13T20:07:29.978247+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 20,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "production_ready": true,
+  "display_name": "SECONDUNIT - H3 - Character Replacement Draft",
+  "category": "Character replacement",
+  "validation_status": "quarantined",
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet.",
+  "release_eligible": false,
+  "legacy_name": "h3_swap_draft_turbo8step_character-replace-previz.json"
+}

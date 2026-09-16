@@ -1,0 +1,215 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "MiniMax H3 DiT (fp8 scaled, pruned)"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "Qwen3-VL 32B text/vision encoder"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "H3 video VAE"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "_meta": {
+      "title": "H3 audio VAE"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "first_frame.png"
+    },
+    "_meta": {
+      "title": "First frame"
+    }
+  },
+  "6": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "5",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": 1344,
+      "height": 768,
+      "crop": "center"
+    },
+    "_meta": {
+      "title": "First frame -> 1344x768 (cover crop)"
+    }
+  },
+  "7": {
+    "class_type": "MiniMaxH3ImageToVideo",
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "prompt": "",
+      "width": 1344,
+      "height": 768,
+      "length": 141,
+      "first_frame": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Animate still"
+    }
+  },
+  "8": {
+    "class_type": "MiniMaxH3SigmaShift",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "shift_video": 12.0,
+      "shift_audio": 3.0
+    },
+    "_meta": {
+      "title": "Sigma shift 12/3 (model default)"
+    }
+  },
+  "9": {
+    "class_type": "PathchSageAttentionKJ",
+    "inputs": {
+      "model": [
+        "8",
+        0
+      ],
+      "sage_attention": "sageattn_qk_int8_pv_fp16_cuda",
+      "allow_compile": false
+    },
+    "_meta": {
+      "title": "Sage attention (int8 QK, fp16 PV) - seen clean at 20 steps"
+    }
+  },
+  "10": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "cfg 1 - negative is zeroed"
+    }
+  },
+  "11": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "9",
+        0
+      ],
+      "seed": 811211,
+      "steps": 20,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "10",
+        0
+      ],
+      "latent_image": [
+        "7",
+        1
+      ],
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "Sample (20 steps, base model)"
+    }
+  },
+  "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode video"
+    }
+  },
+  "13": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Decode generated audio"
+    }
+  },
+  "14": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "images": [
+        "12",
+        0
+      ],
+      "audio": [
+        "13",
+        0
+      ],
+      "frame_rate": 24.0,
+      "loop_count": 0,
+      "filename_prefix": "CMD/SecondUnit/h3_i2v_quality",
+      "format": "video/ProRes",
+      "profile": "hq",
+      "pingpong": false,
+      "save_output": true
+    },
+    "_meta": {
+      "title": "PRORES HQ"
+    }
+  }
+}

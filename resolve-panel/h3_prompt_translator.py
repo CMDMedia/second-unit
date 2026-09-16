@@ -176,7 +176,17 @@ def refs_from_graph(graph, node_id=None):
             title = title_of(inputs[k])
             src = graph.get(str(inputs[k][0])) or {}
             image = str((src.get("inputs") or {}).get("image") or "")
-            refs["pictures"].append({"index": i, "role": picture_role_from_title(title), "title": title, "image": image})
+            # Panel slot metadata is authoritative; display titles are editable
+            # and may omit words such as "identity" or "environment".
+            slot_role = (src.get("_meta") or {}).get("second_unit_role")
+            role = {
+                "pose_identity_front": "identity",
+                "pose_identity_threequarter": "identity",
+                "pose_identity_profile": "identity",
+                "pose_identity_body": "wardrobe",
+                "pose_environment": "environment",
+            }.get(slot_role, picture_role_from_title(title))
+            refs["pictures"].append({"index": i, "role": role, "title": title, "image": image})
         vids = sorted((k for k in inputs if k.startswith("ref_videos.ref_video_") and is_link(inputs[k])),
                       key=lambda k: int(k.rsplit("_", 1)[1]))
         for i, k in enumerate(vids, start=1):

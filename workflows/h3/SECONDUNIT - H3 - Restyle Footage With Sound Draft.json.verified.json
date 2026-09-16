@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Restyle Footage With Sound Draft.json",
+  "graph_sha256": "0a63fb8c8c9169805969d1cb193213a007a6926b40d671e344e720e89057f6e2",
+  "verified_at": "2026-09-13T19:44:21.427233+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 15,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Restyle Footage With Sound Draft",
+  "category": "Performance reference",
+  "validation_status": "schema-only",
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet.",
+  "release_eligible": false,
+  "legacy_name": "h3_v2v_draft_turbo4step_reference-video-with-sound.json",
+  "production_ready": true
+}

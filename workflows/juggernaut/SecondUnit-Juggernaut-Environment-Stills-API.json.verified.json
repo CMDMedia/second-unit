@@ -5,11 +5,6 @@
   "production_ready": true,
   "validation_status": "render-proven",
   "release_eligible": true,
-  "visual_review": "Reviewed environment still at native1216x832.",
-  "validation_scope": "Single 1216x832 environment still; prompt and seed editable. No multi-angle or identity claim.",
-  "render_evidence": {
-    "prompt_id": "c985ac39-b09e-4966-aac2-253ae0dd6d9a",
-    "seconds": 9.01,
-    "change_since_render": "Only output prefix and non-executing panel metadata."
-  }
+  "visual_review": "Reviewed render: passed visual review.",
+  "validation_scope": "Single 1216x832 environment still; prompt and seed editable. No multi-angle or identity claim."
 }

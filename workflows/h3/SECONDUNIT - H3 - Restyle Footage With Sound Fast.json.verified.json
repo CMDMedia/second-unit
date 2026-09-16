@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - H3 - Restyle Footage With Sound Fast.json",
+  "graph_sha256": "e0bc02c826b48a0a3eacc07bf0d04a0663bac3c6ee98707c87371e4ad578ba6a",
+  "verified_at": "2026-09-11T17:00:50.317476+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 11,
+  "local": true,
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Restyle Footage With Sound Fast",
+  "category": "Performance reference",
+  "release_eligible": true,
+  "validation_status": "render-proven",
+  "visual_review": "Reviewed render: performer identity and wardrobe held, requested environment applied; framing may shift slightly because this lane is not depth locked.",
+  "legacy_name": "h3_v2v_fast_reference-video-with-sound.json",
+  "production_ready": true
+}

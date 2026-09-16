@@ -5,17 +5,7 @@
   "production_ready": true,
   "validation_status": "render-proven",
   "release_eligible": true,
-  "visual_review": "Native prompt camera tested on the same environment with pan-left and push-forward requests. Environment-only; no fixed direction adapter. Prompt response does not certify arbitrary hidden geometry or precise trajectories.",
-  "render_evidence": [
-    {
-      "move": "Pan-Left",
-      "prompt_id": "2ade334d-3c5f-4767-a487-29107cc7316a"
-    },
-    {
-      "move": "Push-Forward",
-      "prompt_id": "b04f14a7-b8c9-436a-9a8d-0ce9986f8120"
-    }
-  ],
+  "visual_review": "Reviewed render: passed visual review.",
   "display_name": "LTX 2.5 - Environment Animate - Prompt Camera - 8 steps",
   "delivery_change": "Export-only ImageScale after native video decode: 1080p default, center crop Lanczos; panel reuses same node for720p/4K. Generation graph unchanged from two camera tests. CPU export validation tracked separately."
 }

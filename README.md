@@ -4,7 +4,7 @@
 
 **By CMD Media Group.** Load a compatible ComfyUI workflow from DaVinci Resolve Studio, generate footage, and bring the result into your edit.
 
-Second Unit supports environment stills and camera moves from reference images. The current installed workflow catalog contains **Juggernaut XL v9 Environment Still** and **LTX 2.5 Environment Animate — Prompt Camera**. See [workflows](workflows/README.md) for availability and requirements. Custom workflow imports are labeled separately from reviewed presets. The H3 Pose Follow files are retained for repair only and excluded from the preset menu because visible pose-guide artifacts failed visual review.
+Second Unit supports environment stills and camera moves from reference images. The installed workflow catalog covers MiniMax H3 (world generation, performer replacement, restyle, second angle, animate a still, first and last frame, text to video), LTX 2.5 (animate a still, text to video, performer replacement, restyle, environment animate), SAM 3.1 matte, WAN 2.2 animate, and the **Juggernaut XL v9 Environment Still**. See [workflows](workflows/README.md) for availability and requirements. Custom workflow imports are labeled separately from reviewed presets. The H3 Pose Follow files are retained for repair only and excluded from the preset menu because visible pose-guide artifacts failed visual review.
 
 ## Install on Windows
 

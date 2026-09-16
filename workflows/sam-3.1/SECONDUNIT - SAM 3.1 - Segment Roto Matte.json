@@ -1,0 +1,188 @@
+{
+  "1": {
+    "inputs": {
+      "video": "input_video.mp4",
+      "force_rate": 24,
+      "custom_width": 1024,
+      "custom_height": 576,
+      "frame_load_cap": 121,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "None"
+    },
+    "_meta": {
+      "title": "SOURCE PLATE - replace this (121f = 1 + floor(24*5/8)*8)"
+    },
+    "class_type": "VHS_LoadVideo"
+  },
+  "2": {
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "SAM 3.1 Multiplex (MODEL slot 0, text encoder CLIP slot 1)"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "3": {
+    "inputs": {
+      "text": "person",
+      "clip": [
+        "2",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "SEGMENT PROMPT - what to cut out"
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "4": {
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "batch_index": 0,
+      "length": 1
+    },
+    "_meta": {
+      "title": "First frame only (detection anchor)"
+    },
+    "class_type": "ImageFromBatch"
+  },
+  "5": {
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "image": [
+        "4",
+        0
+      ],
+      "threshold": 0.5,
+      "refine_iterations": 2,
+      "individual_masks": false,
+      "conditioning": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "TEXT-PROMPTED DETECT (frame 0, union mask)"
+    },
+    "class_type": "SAM3_Detect"
+  },
+  "6": {
+    "inputs": {
+      "images": [
+        "1",
+        0
+      ],
+      "model": [
+        "2",
+        0
+      ],
+      "detection_threshold": 0.5,
+      "max_objects": 1,
+      "detect_interval": 1,
+      "initial_mask": [
+        "5",
+        0
+      ],
+      "conditioning": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "TRACK ACROSS ALL FRAMES"
+    },
+    "class_type": "SAM3_VideoTrack"
+  },
+  "7": {
+    "inputs": {
+      "track_data": [
+        "6",
+        0
+      ],
+      "object_indices": ""
+    },
+    "_meta": {
+      "title": "Track -> mask sequence (all tracked objects)"
+    },
+    "class_type": "SAM3_TrackToMask"
+  },
+  "8": {
+    "inputs": {
+      "mask": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Mask -> viewable greyscale frames"
+    },
+    "class_type": "MaskToImage"
+  },
+  "9": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ],
+      "fps": 24.0
+    },
+    "_meta": {
+      "title": "Matte video (no audio - SAM3 generates none)"
+    },
+    "class_type": "CreateVideo"
+  },
+  "10": {
+    "inputs": {
+      "video": [
+        "9",
+        0
+      ],
+      "filename_prefix": "CMD/SecondUnit/_gpu1_sam31_segment",
+      "format": "auto",
+      "codec": "auto"
+    },
+    "_meta": {
+      "title": "SAVE A - viewable mask video"
+    },
+    "class_type": "SaveVideo"
+  },
+  "11": {
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ],
+      "filename_prefix": "CMD/SecondUnit/_gpu1_sam31_segment_maskseq"
+    },
+    "_meta": {
+      "title": "SAVE B - lossless PNG mask sequence (masked-V2V input)"
+    },
+    "class_type": "SaveImage"
+  },
+  "12": {
+    "inputs": {
+      "track_data": [
+        "6",
+        0
+      ],
+      "opacity": 0.5,
+      "fps": 24.0,
+      "images": [
+        "1",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "QA overlay - did it lock onto the right subject?"
+    },
+    "class_type": "SAM3_TrackPreview"
+  }
+}

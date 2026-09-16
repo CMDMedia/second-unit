@@ -1,0 +1,305 @@
+{
+  "1": {
+    "inputs": {
+      "weight_dtype": "default",
+      "unet_name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors"
+    },
+    "_meta": {
+      "title": "LTX 2.5 Distilled BF16 cast to Ada FP8"
+    },
+    "class_type": "UNETLoader"
+  },
+  "2": {
+    "inputs": {
+      "device": "default",
+      "clip_name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors",
+      "type": "ltxv"
+    },
+    "_meta": {
+      "title": "LTX 2.5 Text Encoder"
+    },
+    "class_type": "CLIPLoader"
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "ltx-2.5-video-vae-conv-bf16.safetensors"
+    },
+    "_meta": {
+      "title": "LTX 2.5 Video VAE"
+    },
+    "class_type": "VAELoader"
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "ltx-2.5-audio-vae-bf16.safetensors"
+    },
+    "_meta": {
+      "title": "LTX 2.5 Audio VAE"
+    },
+    "class_type": "VAELoader"
+  },
+  "5": {
+    "inputs": {
+      "custom_height": 576,
+      "select_every_nth": 1,
+      "video": "input_video.mp4",
+      "frame_load_cap": 121,
+      "force_rate": 24,
+      "format": "None",
+      "skip_first_frames": 0,
+      "custom_width": 1024
+    },
+    "_meta": {
+      "title": "TARGET VIDEO - replace this"
+    },
+    "class_type": "VHS_LoadVideo"
+  },
+  "6": {
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "text": "Preserve the source video motion, camera, composition, timing, subject identity, background, and lighting. Apply only the explicitly requested visual edit with photorealistic detail, coherent occlusion, stable edges, natural motion blur, and consistent texture."
+    },
+    "_meta": {
+      "title": "POSITIVE EDIT PROMPT"
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "7": {
+    "inputs": {
+      "clip": [
+        "2",
+        0
+      ],
+      "text": "halos, ghosting, double edges, identity drift, background changes, camera changes, flicker, crawling texture, warped hands, duplicated limbs, blur, low detail"
+    },
+    "_meta": {
+      "title": "NEGATIVE PROMPT"
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "8": {
+    "inputs": {
+      "frame_rate": 24,
+      "negative": [
+        "7",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "LTX 2.5 Conditioning"
+    },
+    "class_type": "LTXVConditioning"
+  },
+  "9": {
+    "inputs": {
+      "batch_size": 1,
+      "width": 1024,
+      "height": 576,
+      "length": 121
+    },
+    "_meta": {
+      "title": "121 frames / 24fps"
+    },
+    "class_type": "EmptyLTXVLatentVideo"
+  },
+  "10": {
+    "inputs": {
+      "latent": [
+        "9",
+        0
+      ],
+      "bypass": false,
+      "strength": 0.0,
+      "vae": [
+        "3",
+        0
+      ],
+      "image": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "NATIVE VIDEO CONDITIONING"
+    },
+    "class_type": "LTXVImgToVideoInplace"
+  },
+  "11": {
+    "inputs": {
+      "batch_size": 1,
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "frames_number": 121,
+      "frame_rate": 24
+    },
+    "_meta": {
+      "title": "Audio Latent"
+    },
+    "class_type": "LTXVEmptyLatentAudio"
+  },
+  "12": {
+    "inputs": {
+      "video_latent": [
+        "10",
+        0
+      ],
+      "audio_latent": [
+        "11",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Combine AV Latent"
+    },
+    "class_type": "LTXVConcatAVLatent"
+  },
+  "13": {
+    "inputs": {
+      "noise_seed": 457289196
+    },
+    "_meta": {
+      "title": "Seed"
+    },
+    "class_type": "RandomNoise"
+  },
+  "14": {
+    "inputs": {
+      "cfg": 1,
+      "negative": [
+        "8",
+        1
+      ],
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Distilled CFG"
+    },
+    "class_type": "CFGGuider"
+  },
+  "15": {
+    "inputs": {
+      "sampler_name": "euler_ancestral"
+    },
+    "_meta": {
+      "title": "Sampler"
+    },
+    "class_type": "KSamplerSelect"
+  },
+  "16": {
+    "inputs": {
+      "sigmas": "0.909375, 0.725, 0.421875, 0.0"
+    },
+    "_meta": {
+      "title": "Official 8-step distilled schedule"
+    },
+    "class_type": "ManualSigmas"
+  },
+  "17": {
+    "inputs": {
+      "sigmas": [
+        "16",
+        0
+      ],
+      "guider": [
+        "14",
+        0
+      ],
+      "noise": [
+        "13",
+        0
+      ],
+      "sampler": [
+        "15",
+        0
+      ],
+      "latent_image": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "LTX 2.5 V2V Sample"
+    },
+    "class_type": "SamplerCustomAdvanced"
+  },
+  "18": {
+    "inputs": {
+      "av_latent": [
+        "17",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Separate AV"
+    },
+    "class_type": "LTXVSeparateAVLatent"
+  },
+  "19": {
+    "inputs": {
+      "temporal_size": 128,
+      "tile_size": 512,
+      "vae": [
+        "3",
+        0
+      ],
+      "samples": [
+        "18",
+        0
+      ],
+      "overlap": 64,
+      "temporal_overlap": 32
+    },
+    "_meta": {
+      "title": "Tiled Video Decode"
+    },
+    "class_type": "VAEDecodeTiled"
+  },
+  "20": {
+    "inputs": {
+      "images": [
+        "19",
+        0
+      ],
+      "audio": [
+        "5",
+        2
+      ],
+      "fps": 24
+    },
+    "_meta": {
+      "title": "Preserve Source Audio"
+    },
+    "class_type": "CreateVideo"
+  },
+  "21": {
+    "inputs": {
+      "format": "auto",
+      "codec": "auto",
+      "filename_prefix": "CMD/SecondUnit/_gpu1_ltx25_v2v_distilled",
+      "video": [
+        "20",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "SAVE OUTPUT"
+    },
+    "class_type": "SaveVideo"
+  }
+}

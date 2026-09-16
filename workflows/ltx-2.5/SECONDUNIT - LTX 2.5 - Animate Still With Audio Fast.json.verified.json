@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - LTX 2.5 - Animate Still With Audio Fast.json",
+  "graph_sha256": "161c75ce6b019810934a93b8ed097a50fa6d5cc358f6be0e70a109a94e90326a",
+  "verified_at": "2026-09-13T13:27:04.926874+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 22,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "visual_review": "Reviewed render: the still animates cleanly with audio.",
+  "validation_status": "render-proven",
+  "release_eligible": true,
+  "legacy_name": "ltx25_i2v_distilled_image-to-video-with-audio.json",
+  "display_name": "SECONDUNIT - LTX 2.5 - Animate Still With Audio Fast",
+  "production_ready": true
+}

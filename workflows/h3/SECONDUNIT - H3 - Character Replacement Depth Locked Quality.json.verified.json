@@ -1,0 +1,28 @@
+{
+  "graph": "SECONDUNIT - H3 - Character Replacement Depth Locked Quality.json",
+  "graph_sha256": "c8d531f4bde18b18c5b1e9dbdb60e864f4321dea748e339244ff310b46f9a0d8",
+  "verified_at": "2026-09-13T20:07:29.986264+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 23,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "display_name": "SECONDUNIT - H3 - Character Replacement Depth Locked Quality",
+  "category": "Character replacement",
+  "validation_status": "schema-only",
+  "visual_review": "Passed schema and model checks; no reviewed render on this build yet.",
+  "release_eligible": false,
+  "legacy_name": "h3_swap_lock_quality_character-replace-depth-locked.json",
+  "production_ready": true
+}

@@ -45,3 +45,29 @@ Choose MiniMax H3 ? Environment Swap ? Fast and **PREVIEW - H3 Pose Follow**. Su
 The ComfyUI UI/API pair performs the same pose-to-video graph. For direct ComfyUI use, supply a24fps1536?864 source. Copy `custom_nodes/SecondUnit-PoseFollow` into ComfyUI's custom_nodes directory and restart ComfyUI when idle. DWPose (`comfyui_controlnet_aux`), native MiniMax H3 nodes, VideoHelperSuite and the models named in the graph are required.
 
 This preview is selectable at the user's request; it is not one of the two render-proven environment presets. Full render and visual validation remain pending. The follow guide is an approximate2D framing transform, not3D camera reconstruction.
+
+## Installed preset catalog
+
+Every preset is an API graph verified against the local ComfyUI lane; the panel shows **proven** for presets with a seen panel-path render and **unproven** for presets that passed schema and model checks only. Fast presets target the Distilled lane, Quality presets the Best quality lane.
+
+| Family | Mode | Fast | Best quality |
+| --- | --- | --- | --- |
+| MiniMax H3 | World Generation (environment replacement, depth locked) | SECONDUNIT - H3 - Environment Replacement Depth Locked Fast | SECONDUNIT - H3 - Environment Replacement Depth Locked Quality; ... Master |
+| MiniMax H3 | World Generation (free camera) | SECONDUNIT - H3 - Environment Replacement Free Camera Fast; ... Draft | - |
+| MiniMax H3 | Replace the performer | SECONDUNIT - H3 - Character Replacement Depth Locked Fast; ... Draft | SECONDUNIT - H3 - Character Replacement Depth Locked Quality; ... Quality |
+| MiniMax H3 | Restyle footage | SECONDUNIT - H3 - Restyle Footage With Sound Fast; ... Draft | SECONDUNIT - H3 - Restyle Footage With Sound Quality |
+| MiniMax H3 | Second angle | SECONDUNIT - H3 - Second Angle Fast | SECONDUNIT - H3 - Second Angle Quality |
+| MiniMax H3 | Animate a still | SECONDUNIT - H3 - Animate Still With Sound Fast | SECONDUNIT - H3 - Animate Still With Sound Quality |
+| MiniMax H3 | First and last frame | SECONDUNIT - H3 - First Last Frame Fast | SECONDUNIT - H3 - First Last Frame Quality |
+| MiniMax H3 | Text to video | SECONDUNIT - H3 - Text To Video With Sound Fast | - |
+| LTX 2.5 | Animate a still | SECONDUNIT - LTX 2.5 - Animate Still With Audio Fast; ... Camera Arc Shot Fast; Environment Animate - Prompt Camera | - |
+| LTX 2.5 | Text to video | SECONDUNIT - LTX 2.5 - Text To Video With Audio | - |
+| LTX 2.5 | Replace the performer | SECONDUNIT - LTX 2.5 - Character Replacement | - |
+| LTX 2.5 | Restyle footage | SECONDUNIT - LTX 2.5 - Restyle Footage | - |
+| SAM 3.1 | Cut a matte | SECONDUNIT - SAM 3.1 - Segment Roto Matte | - |
+| WAN 2.2 | Animate a still | - | SECONDUNIT - WAN 2.2 - Animate Still 5B Quality |
+| Juggernaut XL v9 | Environment still | - | SecondUnit-Juggernaut-Environment-Stills-API |
+
+Custom imports made with LOAD WORKFLOW live in `workflows/loaded/` and stay labeled **custom**.
+
+Seed box: leave blank or `-1` to keep the preset's seed, type a whole number to pin one, or type `random` for a fresh seed. A negative number other than -1 is treated as `random`.

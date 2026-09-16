@@ -1,14 +1,15 @@
-﻿{
-    "graph":  "h3_envswap_fast_pose-follow-preview.json",
-    "graph_sha256":  "ff5d8b1051033a191525a257c4edc430feaa58d884b1f5960edab3ac01b8dc82",
-    "local":  true,
-    "production_ready":  false,
-    "user_requested_candidate":  false,
-    "user_workflow":  false,
-    "experimental":  true,
-    "validation_status":  "preview - prior full-strength run rejected: guide leakage",
-    "release_eligible":  false,
-    "pipeline":  "h3_pose_follow",
-    "display_name":  "REPAIR ONLY - H3 Pose Follow",
-    "validation_scope":  "ControlNet strength0.35, end_percent0.6; one continuous follow; raw1536x864; no LTX or RTX upscale; rerender required"
+{
+  "graph": "h3_envswap_fast_pose-follow-preview.json",
+  "graph_sha256": "8d31b73da9453bdf5310d0abdb2e9bb7ab41ca16c174706ab5e70c976c6dc34b",
+  "local": true,
+  "production_ready": false,
+  "user_requested_candidate": true,
+  "user_workflow": true,
+  "experimental": true,
+  "validation_status": "user-reviewed preview",
+  "release_eligible": false,
+  "pipeline": "h3_pose_follow",
+  "display_name": "H3 Pose Follow - INT8",
+  "validation_scope": "Tested 83 frames / 24 fps, INT8 Turbo4 Sage, ControlNet 0.6 full schedule, GPU YOLOX, 512x288 performance reference, max image references, native 1536x864. Latest render 119.171 seconds with cached inputs; fresh end-to-end timing is not verified.",
+  "visual_review": "Reviewed render: not yet acceptable for release."
 }

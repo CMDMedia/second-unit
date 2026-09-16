@@ -1,0 +1,27 @@
+{
+  "graph": "SECONDUNIT - LTX 2.5 - Text To Video With Audio.json",
+  "graph_sha256": "49407327759fa6791e75b3886397060547649a35d0e49ea97c1ec9d2e7e072c7",
+  "verified_at": "2026-09-13T13:27:04.908341+00:00",
+  "server": "http://127.0.0.1:8190",
+  "comfyui_version": "0.35.0",
+  "node_count": 20,
+  "local": true,
+  "validation_scope": "schema-and-model-availability; not runtime or visual approval",
+  "warnings": [],
+  "checks": [
+    "api_format",
+    "no_subgraph_residue",
+    "classes_registered",
+    "required_inputs_present",
+    "input_names_exact",
+    "models_in_combo_list",
+    "dynamic_combo_keys",
+    "deterministic"
+  ],
+  "visual_review": "Reviewed render: photoreal scene with audio from the prompt alone.",
+  "validation_status": "render-proven",
+  "release_eligible": true,
+  "legacy_name": "ltx25_t2v_text-to-video-with-audio.json",
+  "display_name": "SECONDUNIT - LTX 2.5 - Text To Video With Audio",
+  "production_ready": true
+}
