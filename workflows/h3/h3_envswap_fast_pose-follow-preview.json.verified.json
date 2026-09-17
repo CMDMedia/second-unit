@@ -1,6 +1,6 @@
 {
   "graph": "h3_envswap_fast_pose-follow-preview.json",
-  "graph_sha256": "8d31b73da9453bdf5310d0abdb2e9bb7ab41ca16c174706ab5e70c976c6dc34b",
+  "graph_sha256": "f15b91d62b73458def823e59802cb53bb9cf061bcd6dd2dd098c0133fd35208f",
   "local": true,
   "production_ready": false,
   "user_requested_candidate": true,
@@ -11,5 +11,5 @@
   "pipeline": "h3_pose_follow",
   "display_name": "H3 Pose Follow - INT8",
   "validation_scope": "Tested 83 frames / 24 fps, INT8 Turbo4 Sage, ControlNet 0.6 full schedule, GPU YOLOX, 512x288 performance reference, max image references, native 1536x864. Latest render 119.171 seconds with cached inputs; fresh end-to-end timing is not verified.",
-  "visual_review": "Reviewed render: not yet acceptable for release."
+  "visual_review": "Body and motion accepted in a reviewed preview; environment quality still needs improvement. This is not production or release certification."
 }

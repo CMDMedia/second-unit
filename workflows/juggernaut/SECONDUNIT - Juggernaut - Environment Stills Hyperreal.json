@@ -1,0 +1,154 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"
+    },
+    "_meta": {
+      "title": "Juggernaut XL v9 RunDiffusionPhoto v2"
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "1",
+        1
+      ],
+      "text": "RAW photograph, real location photography inside a vast water-carved limestone cave chamber at night, shot on a full-frame digital cinema camera with a 24mm lens at eye level, deep focus, long exposure, natural exposure with true deep blacks and restrained highlights, subtle photographic grain. Cinematic and spacious: a cathedral-scale chamber with a level compacted-earth and wet stone floor open enough for two people to stand and sit apart, a low natural rock ledge at the near left edge, a small still pool reflecting light, eroded rib columns, bedding shelves and folded limestone curtains along the far walls, a dark passage receding into blackness at the back. One motivated light only: a cold steel-blue moonlight shaft entering from a high side opening at a low grazing angle, raking the wet rock with bright specular edges and long shadows, thin cool haze giving the light a visible volumetric path, everything else falling into darkness with faint rock texture. Wet pale-grey limestone with fine geological microtexture, mineral veins, calcite crust, damp patches, sparse drips. No people. Documentary realism, geological survey photograph, National Geographic quality, nothing stylized."
+    },
+    "_meta": {
+      "title": "ENVIRONMENT PROMPT",
+      "second_unit_role": "environment_prompt"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "1",
+        1
+      ],
+      "text": "daylight, sky, exterior, bright, overexposed, sunlit, open desert, sand dunes outdoors, warm light, golden hour, orange, blue tint, CGI, 3D render, video game, painting, illustration, concept art, digital art, smooth plastic surfaces, oversaturated, HDR look, glowing, neon, fantasy, cartoon, blurry, soft focus, low detail, text, watermark, people, person, figure"
+    },
+    "_meta": {
+      "title": "negative - nothing rendered or stylized"
+    }
+  },
+  "6": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1344,
+      "height": 768,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "16:9 canvas 1344x768"
+    }
+  },
+  "7": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "seed": 20260916,
+      "steps": 60,
+      "cfg": 4.0,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ],
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "BASE PASS 60 steps dpmpp_2m_sde karras cfg 4",
+      "second_unit_role": "environment_sampler"
+    }
+  },
+  "10": {
+    "class_type": "LatentUpscaleBy",
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "upscale_method": "bislerp",
+      "scale_by": 1.5
+    },
+    "_meta": {
+      "title": "hires latent x1.5"
+    }
+  },
+  "11": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "seed": 20260916,
+      "steps": 30,
+      "cfg": 4.0,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "10",
+        0
+      ],
+      "denoise": 0.42
+    },
+    "_meta": {
+      "title": "HIRES PASS 2016x1152 denoise 0.42"
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "decode"
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ],
+      "filename_prefix": "SecondUnit/Environments/Juggernaut/Environment-Master-Hyperreal"
+    },
+    "_meta": {
+      "title": "ENVIRONMENT MASTER",
+      "second_unit_role": "environment_output"
+    }
+  }
+}

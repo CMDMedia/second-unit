@@ -1,6 +1,6 @@
 {
   "graph": "SECONDUNIT - SAM 3.1 - Segment Roto Matte.json",
-  "graph_sha256": "1f755cf3694536e1fb3be1626d01bcbf61f9dc0a7c192567e3f6cac8987a8286",
+  "graph_sha256": "49eb3507a1de25f699192a20d82dc23b51183e223e5afd546634bec747ae8edd",
   "verified_at": "2026-09-11T17:00:50.329040+00:00",
   "server": "http://127.0.0.1:8190",
   "comfyui_version": "0.35.0",

@@ -40,7 +40,7 @@ Recorded focal length can guide the environment prompt. Your lens override and r
 
 ## H3 Pose Follow preview
 
-Choose MiniMax H3 ? Environment Swap ? Fast and **PREVIEW - H3 Pose Follow**. Supply a source video, environment still, and front, three-quarter, profile and body reference cards. One Generate action stages the selected source moment at24fps/1536?864, extracts DWPose, makes a smoothed2D follow guide, applies native H3 ControlNet and saves the trimmed native1536?864 result. No LTX or RTX upscale runs. Source staging center-crops to16:9.
+Choose MiniMax H3 ? Environment Swap ? Fast and **H3 Pose Follow - INT8**. Supply a source video, environment still, and front, three-quarter, profile and body reference cards. One Generate action stages the selected source moment at24fps/1536?864, extracts DWPose, makes a smoothed2D follow guide, applies native H3 ControlNet and saves the trimmed native1536?864 result. No LTX or RTX upscale runs. Source staging center-crops to16:9.
 
 The ComfyUI UI/API pair performs the same pose-to-video graph. For direct ComfyUI use, supply a24fps1536?864 source. Copy `custom_nodes/SecondUnit-PoseFollow` into ComfyUI's custom_nodes directory and restart ComfyUI when idle. DWPose (`comfyui_controlnet_aux`), native MiniMax H3 nodes, VideoHelperSuite and the models named in the graph are required.
 
@@ -71,3 +71,7 @@ Every preset is an API graph verified against the local ComfyUI lane; the panel 
 Custom imports made with LOAD WORKFLOW live in `workflows/loaded/` and stay labeled **custom**.
 
 Seed box: leave blank or `-1` to keep the preset's seed, type a whole number to pin one, or type `random` for a fresh seed. A negative number other than -1 is treated as `random`.
+
+## Workflow review status
+
+H3 Pose Follow has scoped acceptance for body and motion in a reviewed preview. Its environment still needs improvement; keep it experimental. The two-pass Juggernaut Environment Stills Hyperreal preset is schema-checked only, with no visual approval. The original reviewed Juggernaut Environment Still remains the default.

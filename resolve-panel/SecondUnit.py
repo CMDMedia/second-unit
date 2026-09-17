@@ -7686,7 +7686,7 @@ class GenerateJob(threading.Thread):
                           render_seconds=time.monotonic()-started)
                 return
             self.post("status", state="RENDERING", prompt_id=prompt_id,
-                      elapsed=time.monotonic()-started, text="Generating environment still at 1216 x 832...")
+                      elapsed=time.monotonic()-started, text="Generating environment still at the preset resolution...")
             self.stop_event.wait(POLL_INTERVAL)
         raise SecondUnitError("Stopped watching; render may still be running: " + prompt_id)
 
@@ -10486,7 +10486,7 @@ class SecondUnitPanel(object):
 
 
     MODE_BLURB = {
-        "STILLS": "Generate one photoreal environment image at 1216 x 832.",
+        "STILLS": "Generate one environment image at the selected preset resolution.",
         "STORYBOARD": "Create four environment references and one complete storyboard sheet.",
         "T2V": "Invent a shot from the description alone.",
         "I2V": "Animate a still into a moving shot.",
@@ -10666,7 +10666,7 @@ class SecondUnitPanel(object):
         if pose_follow:
             self.set_attr("frames", "Text", "PREVIEW | Native 1536 x 864 | source pose to 2D follow to H3 | no LTX / RTX upscale")
         if mode == "STILLS":
-            self.set_attr("frames", "Text", "Environment PNG at 1216 x 832")
+            self.set_attr("frames", "Text", "Environment PNG at preset resolution")
         if mode == "STORYBOARD":
             self.set_attr("frames", "Text", "4 references at 1216 x 832 + 2432 x 1664 storyboard")
         if getattr(self, "build_stale", False):

@@ -1,0 +1,12 @@
+{
+  "graph": "SECONDUNIT - Juggernaut - Environment Stills Hyperreal.json",
+  "graph_sha256": "a0918659339affd7fafe501e5280fdf6fb88c786c615503a38c922bbcf52bc90",
+  "local": true,
+  "production_ready": false,
+  "user_requested_candidate": true,
+  "experimental": true,
+  "validation_status": "schema-only preview",
+  "release_eligible": false,
+  "display_name": "Juggernaut - Environment Stills Hyperreal",
+  "validation_scope": "Node schema and model availability checked. This two-pass preset has not passed visual review."
+}

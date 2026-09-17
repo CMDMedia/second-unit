@@ -1,6 +1,6 @@
 {
   "graph": "SECONDUNIT - H3 - Text To Video With Sound Fast.json",
-  "graph_sha256": "bbe93a23cf46eb4fc476d862627473b3a7c3a19c8c9df25a0e3a3aca72c78e09",
+  "graph_sha256": "29684a97aa6de763a739c3b09bad9e12e4f1b815486ac012647eb66981434429",
   "verified_at": "2026-09-11T17:00:50.291157+00:00",
   "server": "http://127.0.0.1:8190",
   "comfyui_version": "0.35.0",
